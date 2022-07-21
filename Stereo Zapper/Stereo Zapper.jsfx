@@ -1,9 +1,11 @@
 desc:Stereo Zapper (BirdBird)
+tags: distortion, bitcrusher
 version: 0.5
 author: BirdBird
 changelog: Alpha Version
 provides:
   dependencies/*
+about: Effect that crushes the signal by scrambling the left and right stereo channels in series. 
 
 options:gfx_hz=120
 
