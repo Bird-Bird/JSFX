@@ -1,2 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="BirdBird JSFX"/>
+<index version="1" name="BirdBird JSFX" commit="b2528f17c8a3e194e506cc1b7bfe50cb5cae16d6">
+  <category name="Stereo Zapper">
+    <reapack name="Stereo Zapper.jsfx" type="effect" desc="Stereo Zapper (BirdBird)">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 Effect that crushes the signal by scrambling the left and right stereo channels in series.\par}
+}
+]]></description>
+      </metadata>
+      <version name="0.5" author="BirdBird" time="2022-07-21T22:09:21Z">
+        <changelog><![CDATA[Alpha Version]]></changelog>
+        <source>https://github.com/Bird-Bird/JSFX/raw/9979a24286f8559147f6fb5bc488bbc8008a41c6/Stereo%20Zapper/Stereo%20Zapper.jsfx</source>
+        <source file="dependencies/SVF.jsfx-inc">https://github.com/Bird-Bird/JSFX/raw/9979a24286f8559147f6fb5bc488bbc8008a41c6/Stereo%20Zapper/dependencies/SVF.jsfx-inc</source>
+        <source file="dependencies/birdbird_parameters.jsfx-inc">https://github.com/Bird-Bird/JSFX/raw/9979a24286f8559147f6fb5bc488bbc8008a41c6/Stereo%20Zapper/dependencies/birdbird_parameters.jsfx-inc</source>
+        <source file="dependencies/birdbird_sizzle_gui.jsfx-inc">https://github.com/Bird-Bird/JSFX/raw/9979a24286f8559147f6fb5bc488bbc8008a41c6/Stereo%20Zapper/dependencies/birdbird_sizzle_gui.jsfx-inc</source>
+      </version>
+      <version name="0.5.1" author="BirdBird" time="2022-07-21T22:25:00Z">
+        <changelog><![CDATA[Alpha Version]]></changelog>
+        <source>https://github.com/Bird-Bird/JSFX/raw/b2528f17c8a3e194e506cc1b7bfe50cb5cae16d6/Stereo%20Zapper/Stereo%20Zapper.jsfx</source>
+        <source file="dependencies/SVF.jsfx-inc">https://github.com/Bird-Bird/JSFX/raw/b2528f17c8a3e194e506cc1b7bfe50cb5cae16d6/Stereo%20Zapper/dependencies/SVF.jsfx-inc</source>
+        <source file="dependencies/birdbird_parameters.jsfx-inc">https://github.com/Bird-Bird/JSFX/raw/b2528f17c8a3e194e506cc1b7bfe50cb5cae16d6/Stereo%20Zapper/dependencies/birdbird_parameters.jsfx-inc</source>
+        <source file="dependencies/birdbird_sizzle_gui.jsfx-inc">https://github.com/Bird-Bird/JSFX/raw/b2528f17c8a3e194e506cc1b7bfe50cb5cae16d6/Stereo%20Zapper/dependencies/birdbird_sizzle_gui.jsfx-inc</source>
+      </version>
+    </reapack>
+  </category>
+</index>
