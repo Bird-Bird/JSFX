@@ -1,0 +1,140 @@
+@init
+function set_coefficients(cutoff, q, gain)
+instance(type, g, k, a1, a2, a3, m0, m1, m2, gain, A)
+(
+  //Low Pass
+  type == 0 ? (
+    g = tan($pi*cutoff/srate);
+    k = 1/q;
+    a1 = 1/(1+ g*(g+k));
+    a2 = g*a1;
+    a3 = g*a2;
+    m0 = 0;
+    m1 = 0;
+    m2 = 1;
+  );
+  
+  //Band Pass
+  type == 1 ? (
+    g = tan($pi*cutoff/srate);
+    k = 1/q;
+    a1 = 1/(1+ g*(g+k));
+    a2 = g*a1;
+    a3 = g*a2;
+    m0 = 0;
+    m1 = 1;
+    m2 = 0;
+  );
+  
+  //High Pass
+  type == 2 ? (
+    g = tan($pi*cutoff/srate);
+    k = 1/q;
+    a1 = 1/(1+ g*(g+k));
+    a2 = g*a1;
+    a3 = g*a2;
+    m0 = 1;
+    m1 = -k;
+    m2 = -1;
+  );
+  
+  //Notch
+  type == 3 ? (
+    g = tan($pi*cutoff/srate);
+    k = 1/q;
+    a1 = 1/(1+ g*(g+k));
+    a2 = g*a1;
+    a3 = g*a2;
+    m0 = 1;
+    m1 = -k;
+    m2 = 0;
+  );
+  
+  //Peak
+  type == 4 ? (
+    g = tan($pi*cutoff/srate);
+    k = 1/q;
+    a1 = 1/(1+ g*(g+k));
+    a2 = g*a1;
+    a3 = g*a2;
+    m0 = 1;
+    m1 = -k;
+    m2 = -2;
+  );
+  
+  //All Pass
+  type == 5 ? (
+    g = tan($pi*cutoff/srate);
+    k = 1/q;
+    a1 = 1/(1+ g*(g+k));
+    a2 = g*a1;
+    a3 = g*a2;   
+    m0 = 1;
+    m1 = -2*k;
+    m2 = 0; 
+  );
+  
+  //Bell
+  type == 6 ? (
+    A = pow(10, gain / 40.0);
+    g = tan($pi*cutoff/srate);
+    k = 1/(q*A);
+    a1 = 1/(1+ g*(g+k));
+    a2 = g*a1;
+    a3 = g*a2;
+    m0 = 1;
+    m1 = k*(A*A-1);
+    m2 = 0;    
+  );
+  
+  //Low Shelf
+  type == 7 ? (
+    A = pow(10, gain / 40.0);
+    g = tan($pi*cutoff/srate)/sqrt(A);
+    k = 1/q;
+    a1 = 1/(1+ g*(g+k));
+    a2 = g*a1;
+    a3 = g*a2;
+    m0 = 1;
+    m1 = k*(A-1);
+    m2 = A*A - 1;    
+  );
+  
+  //High Shelf
+  type == 8 ? (
+    A = pow(10, gain / 40.0);
+    g = tan($pi*cutoff/srate)/sqrt(A);
+    k = 1/q;
+    a1 = 1/(1+ g*(g+k));
+    a2 = g*a1;
+    a3 = g*a2;
+    m0 = A*A;
+    m1 = k*(1-A)*A;
+    m2 = (1 - A*A);    
+  );
+);
+function SVF(type, cutoff, q)
+(
+  this.type = type;
+  this.cutoff = cutoff;
+  this.ic1eq = 0;
+  this.ic2eq = 0;
+  this.set_coefficients(cutoff,q,0);
+  this.id = id;
+);
+function tick(sp)
+instance(ic1eq, ic2eq, a1, a2, a3, m0, m1, m2, A) local(v1, v2, v3, out)
+(
+  v3 = sp - ic2eq;
+  v1 = a1*ic1eq + a2*v3;
+  v2 = ic2eq + a2*ic1eq + a3* v3;
+  ic1eq = 2*v1 - ic1eq;
+  ic2eq = 2*v2 - ic2eq;
+  out = m0*sp + m1*v1 + m2*v2;
+  out;
+);
+function flush()
+(
+  this.ic1eq = 0;
+  this.ic2eq = 0;
+);

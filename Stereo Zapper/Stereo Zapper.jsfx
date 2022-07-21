@@ -1,0 +1,543 @@
+desc:Stereo Zapper (BirdBird)
+version: 0.5
+author: BirdBird
+changelog: Alpha Version
+provides:
+  dependencies/*
+
+options:gfx_hz=120
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+import birdbird_sizzle_gui.jsfx-inc
+import birdbird_parameters.jsfx-inc
+import SVF.jsfx-inc
+
+slider1:1<0,1,0.00001>-Mix
+slider2:<0,1,0.00001>-Pre Filter
+slider3:<0,1,0.00001>-Post Filter
+slider4:1<0,1,0.00001>-Dry/Wet
+slider5:2<0,4,1>-Laser Order
+slider6:0<0,1,1>-MIDI Switch
+
+@slider
+mix.pr_slider_change();
+f_pre.pr_slider_change();
+f_post.pr_slider_change();
+wet.pr_slider_change();
+laser = slider5;
+use_midi = slider6;
+
+@serialize
+file_var(0, version);
+file_mem(0,0,10);
+
+@init
+ext_noinit = 1.0;
+version = 0.5;
+srate_mult = srate/44100;
+flush_filters = 0;
+
+//PARAMETERS
+crusher_mem = 0;
+param_glide = 30;
+mix.pr_interp(param_glide,   0, 1);
+f_pre.pr_interp(param_glide, 0, 2);
+f_post.pr_interp(param_glide,0, 3);
+wet.pr_interp(param_glide,   0, 4);
+laser = 0;
+
+//PRE-POST FILTERS
+f_p_start = 1500; f_p_end = 22000; f_p_bw = 0.5;
+function get_post_filter(t) local(num_octaves)
+(
+  num_octaves = log(f_p_end/f_p_start)/log(2);
+  f_p_start*2^(num_octaves*(1-t));
+);
+lp_p_l.SVF(0, get_post_filter(f_post.pr_get()), f_p_bw);
+lp_p_r.SVF(0, get_post_filter(f_post.pr_get()), f_p_bw);
+lp_pre_l.SVF(0, get_post_filter(f_pre.pr_get()), f_p_bw);
+lp_pre_r.SVF(0, get_post_filter(f_pre.pr_get()), f_p_bw);
+
+//LASER
+ap_freq = 200; bw = 1;
+ap_l_1.SVF(5, ap_freq, bw);
+ap_r_1.SVF(5, ap_freq, bw);
+ap_l_2.SVF(5, ap_freq, bw);
+ap_r_2.SVF(5, ap_freq, bw);
+ap_l_3.SVF(5, ap_freq, bw);
+ap_r_3.SVF(5, ap_freq, bw);
+ap_l_4.SVF(5, ap_freq, bw);
+ap_r_4.SVF(5, ap_freq, bw);
+ap_l_5.SVF(5, ap_freq, bw);
+ap_r_5.SVF(5, ap_freq, bw);
+ap_l_6.SVF(5, ap_freq, bw);
+ap_r_6.SVF(5, ap_freq, bw);
+ap_l_7.SVF(5, ap_freq, bw);
+ap_r_7.SVF(5, ap_freq, bw);
+ap_l_8.SVF(5, ap_freq, bw);
+ap_r_8.SVF(5, ap_freq, bw);
+ap_l_9.SVF(5, ap_freq, bw);
+ap_r_9.SVF(5, ap_freq, bw);
+ap_l_10.SVF(5, ap_freq, bw);
+ap_r_10.SVF(5, ap_freq, bw);
+ap_l_11.SVF(5, ap_freq, bw);
+ap_r_11.SVF(5, ap_freq, bw);
+ap_l_12.SVF(5, ap_freq, bw);
+ap_r_12.SVF(5, ap_freq, bw);
+ap_l_13.SVF(5, ap_freq, bw);
+ap_r_13.SVF(5, ap_freq, bw);
+ap_l_14.SVF(5, ap_freq, bw);
+ap_r_14.SVF(5, ap_freq, bw);
+ap_l_15.SVF(5, ap_freq, bw);
+ap_r_15.SVF(5, ap_freq, bw);
+ap_l_16.SVF(5, ap_freq, bw);
+ap_r_16.SVF(5, ap_freq, bw);
+ap_l_17.SVF(5, ap_freq, bw);
+ap_r_17.SVF(5, ap_freq, bw);
+ap_l_18.SVF(5, ap_freq, bw);
+ap_r_18.SVF(5, ap_freq, bw);
+ap_l_19.SVF(5, ap_freq, bw);
+ap_r_19.SVF(5, ap_freq, bw);
+ap_l_20.SVF(5, ap_freq, bw);
+ap_r_20.SVF(5, ap_freq, bw);
+ap_l_21.SVF(5, ap_freq, bw);
+ap_r_21.SVF(5, ap_freq, bw);
+ap_l_22.SVF(5, ap_freq, bw);
+ap_r_22.SVF(5, ap_freq, bw);
+ap_l_23.SVF(5, ap_freq, bw);
+ap_r_23.SVF(5, ap_freq, bw);
+ap_l_24.SVF(5, ap_freq, bw);
+ap_r_24.SVF(5, ap_freq, bw);
+ap_l_25.SVF(5, ap_freq, bw);
+ap_r_25.SVF(5, ap_freq, bw);
+ap_l_26.SVF(5, ap_freq, bw);
+ap_r_26.SVF(5, ap_freq, bw);
+ap_l_27.SVF(5, ap_freq, bw);
+ap_r_27.SVF(5, ap_freq, bw);
+ap_l_28.SVF(5, ap_freq, bw);
+ap_r_28.SVF(5, ap_freq, bw);
+ap_l_29.SVF(5, ap_freq, bw);
+ap_r_29.SVF(5, ap_freq, bw);
+ap_l_30.SVF(5, ap_freq, bw);
+ap_r_30.SVF(5, ap_freq, bw);
+ap_l_31.SVF(5, ap_freq, bw);
+ap_r_31.SVF(5, ap_freq, bw);
+ap_l_32.SVF(5, ap_freq, bw);
+ap_r_32.SVF(5, ap_freq, bw);
+
+function ap_flush()
+(
+  ap_l_1.flush();
+  ap_r_1.flush();
+  ap_l_2.flush();
+  ap_r_2.flush();
+  ap_l_3.flush();
+  ap_r_3.flush();
+  ap_l_4.flush();
+  ap_r_4.flush();
+  ap_l_5.flush();
+  ap_r_5.flush();
+  ap_l_6.flush();
+  ap_r_6.flush();
+  ap_l_7.flush();
+  ap_r_7.flush();
+  ap_l_8.flush();
+  ap_r_8.flush();
+  ap_l_9.flush();
+  ap_r_9.flush();
+  ap_l_10.flush();
+  ap_r_10.flush();
+  ap_l_11.flush();
+  ap_r_11.flush();
+  ap_l_12.flush();
+  ap_r_12.flush();
+  ap_l_13.flush();
+  ap_r_13.flush();
+  ap_l_14.flush();
+  ap_r_14.flush();
+  ap_l_15.flush();
+  ap_r_15.flush();
+  ap_l_16.flush();
+  ap_r_16.flush();
+  ap_l_17.flush();
+  ap_r_17.flush();
+  ap_l_18.flush();
+  ap_r_18.flush();
+  ap_l_19.flush();
+  ap_r_19.flush();
+  ap_l_20.flush();
+  ap_r_20.flush();
+  ap_l_21.flush();
+  ap_r_21.flush();
+  ap_l_22.flush();
+  ap_r_22.flush();
+  ap_l_23.flush();
+  ap_r_23.flush();
+  ap_l_24.flush();
+  ap_r_24.flush();
+  ap_l_25.flush();
+  ap_r_25.flush();
+  ap_l_26.flush();
+  ap_r_26.flush();
+  ap_l_27.flush();
+  ap_r_27.flush();
+  ap_l_28.flush();
+  ap_r_28.flush();
+  ap_l_29.flush();
+  ap_r_29.flush();
+  ap_l_30.flush();
+  ap_r_30.flush();
+  ap_l_31.flush();
+  ap_r_31.flush();
+  ap_l_32.flush();
+  ap_r_32.flush();
+);
+
+@block
+while(
+  midirecv(offs, m1, m2) ? (
+    status = m1&$xF0;
+    status == $x90 ? (
+      note = m2&$xFF;
+      sm_o = note/4 - 128/8;
+    );   
+  );
+);
+
+@sample
+mix.pr_update();
+f_pre.pr_update();
+f_post.pr_update();
+wet.pr_update();
+
+mix_p    = mix.pr_get();
+f_pre_p  = f_pre.pr_get();
+f_post_p = f_post.pr_get();
+wet_p    = wet.pr_get();
+
+//PRE-FILTER
+sp_pl = spl0; sp_pr = spl1;
+f_pre.pr_needs_update() == 1 ? (
+  lp_pre_l.set_coefficients(get_post_filter(f_pre_p), lerp(0.5, 1.9, f_pre_p), 0);
+  lp_pre_r.set_coefficients(get_post_filter(f_pre_p), lerp(0.5, 1.9, f_pre_p), 0);
+);
+sp_pl = lp_pre_l.tick(sp_pl);
+sp_pr = lp_pre_r.tick(sp_pr);
+
+//CRUSHERS
+crusher_clock += 1; c = 0;
+loop(10,
+  sp_0 = sp_pl; sp_1 = sp_pr;
+  spl_offset = (use_midi == 1 && crusher_mem[c] > 0) ? sm_o : 0;
+  crusher_mem[c] == 0 ? (spl_offset = 0;);
+  duration = (crusher_mem[c]*srate_mult + spl_offset) * mix_p;
+  crusher_clock % duration <= duration/2 ? (
+    sp_pl = sp_1;
+    sp_pr = sp_0*-1;
+  ) : (
+    sp_pl = sp_pl;
+    sp_pr = sp_pr;
+  );
+  c += 1;
+);
+
+
+//FILTERS
+sp_f_l = sp_pl;
+sp_f_r = sp_pr;
+flush_filters == 1 ? (
+  ap_flush();
+  flush_filters = 0;
+);
+laser == 0 ? (
+  0;
+):(laser == 1) ? (
+  sp_f_l = ap_l_1.tick(sp_f_l);
+  sp_f_r = ap_r_1.tick(sp_f_r);
+  sp_f_l = ap_l_2.tick(sp_f_l);
+  sp_f_r = ap_r_2.tick(sp_f_r);
+  sp_f_l = ap_l_3.tick(sp_f_l);
+  sp_f_r = ap_r_3.tick(sp_f_r);
+  sp_f_l = ap_l_4.tick(sp_f_l);
+  sp_f_r = ap_r_4.tick(sp_f_r);
+):(laser == 2) ? (
+  sp_f_l = ap_l_1.tick(sp_f_l);
+  sp_f_r = ap_r_1.tick(sp_f_r);
+  sp_f_l = ap_l_2.tick(sp_f_l);
+  sp_f_r = ap_r_2.tick(sp_f_r);
+  sp_f_l = ap_l_3.tick(sp_f_l);
+  sp_f_r = ap_r_3.tick(sp_f_r);
+  sp_f_l = ap_l_4.tick(sp_f_l);
+  sp_f_r = ap_r_4.tick(sp_f_r);
+  sp_f_l = ap_l_5.tick(sp_f_l);
+  sp_f_r = ap_r_5.tick(sp_f_r);
+  sp_f_l = ap_l_6.tick(sp_f_l);
+  sp_f_r = ap_r_6.tick(sp_f_r);
+  sp_f_l = ap_l_7.tick(sp_f_l);
+  sp_f_r = ap_r_7.tick(sp_f_r);
+  sp_f_l = ap_l_8.tick(sp_f_l);
+  sp_f_r = ap_r_8.tick(sp_f_r);
+):(laser == 3) ? (
+  sp_f_l = ap_l_1.tick(sp_f_l);
+  sp_f_r = ap_r_1.tick(sp_f_r);
+  sp_f_l = ap_l_2.tick(sp_f_l);
+  sp_f_r = ap_r_2.tick(sp_f_r);
+  sp_f_l = ap_l_3.tick(sp_f_l);
+  sp_f_r = ap_r_3.tick(sp_f_r);
+  sp_f_l = ap_l_4.tick(sp_f_l);
+  sp_f_r = ap_r_4.tick(sp_f_r);
+  sp_f_l = ap_l_5.tick(sp_f_l);
+  sp_f_r = ap_r_5.tick(sp_f_r);
+  sp_f_l = ap_l_6.tick(sp_f_l);
+  sp_f_r = ap_r_6.tick(sp_f_r);
+  sp_f_l = ap_l_7.tick(sp_f_l);
+  sp_f_r = ap_r_7.tick(sp_f_r);
+  sp_f_l = ap_l_8.tick(sp_f_l);
+  sp_f_r = ap_r_8.tick(sp_f_r);
+  sp_f_l = ap_l_9.tick(sp_f_l);
+  sp_f_r = ap_r_9.tick(sp_f_r);
+  sp_f_l = ap_l_10.tick(sp_f_l);
+  sp_f_r = ap_r_10.tick(sp_f_r);
+  sp_f_l = ap_l_11.tick(sp_f_l);
+  sp_f_r = ap_r_11.tick(sp_f_r);
+  sp_f_l = ap_l_12.tick(sp_f_l);
+  sp_f_r = ap_r_12.tick(sp_f_r);
+  sp_f_l = ap_l_13.tick(sp_f_l);
+  sp_f_r = ap_r_13.tick(sp_f_r);
+  sp_f_l = ap_l_14.tick(sp_f_l);
+  sp_f_r = ap_r_14.tick(sp_f_r);
+  sp_f_l = ap_l_15.tick(sp_f_l);
+  sp_f_r = ap_r_15.tick(sp_f_r);
+  sp_f_l = ap_l_16.tick(sp_f_l);
+  sp_f_r = ap_r_16.tick(sp_f_r);
+):(laser == 4) ? (
+  sp_f_l = ap_l_1.tick(sp_f_l);
+  sp_f_r = ap_r_1.tick(sp_f_r);
+  sp_f_l = ap_l_2.tick(sp_f_l);
+  sp_f_r = ap_r_2.tick(sp_f_r);
+  sp_f_l = ap_l_3.tick(sp_f_l);
+  sp_f_r = ap_r_3.tick(sp_f_r);
+  sp_f_l = ap_l_4.tick(sp_f_l);
+  sp_f_r = ap_r_4.tick(sp_f_r);
+  sp_f_l = ap_l_5.tick(sp_f_l);
+  sp_f_r = ap_r_5.tick(sp_f_r);
+  sp_f_l = ap_l_6.tick(sp_f_l);
+  sp_f_r = ap_r_6.tick(sp_f_r);
+  sp_f_l = ap_l_7.tick(sp_f_l);
+  sp_f_r = ap_r_7.tick(sp_f_r);
+  sp_f_l = ap_l_8.tick(sp_f_l);
+  sp_f_r = ap_r_8.tick(sp_f_r);
+  sp_f_l = ap_l_9.tick(sp_f_l);
+  sp_f_r = ap_r_9.tick(sp_f_r);
+  sp_f_l = ap_l_10.tick(sp_f_l);
+  sp_f_r = ap_r_10.tick(sp_f_r);
+  sp_f_l = ap_l_11.tick(sp_f_l);
+  sp_f_r = ap_r_11.tick(sp_f_r);
+  sp_f_l = ap_l_12.tick(sp_f_l);
+  sp_f_r = ap_r_12.tick(sp_f_r);
+  sp_f_l = ap_l_13.tick(sp_f_l);
+  sp_f_r = ap_r_13.tick(sp_f_r);
+  sp_f_l = ap_l_14.tick(sp_f_l);
+  sp_f_r = ap_r_14.tick(sp_f_r);
+  sp_f_l = ap_l_15.tick(sp_f_l);
+  sp_f_r = ap_r_15.tick(sp_f_r);
+  sp_f_l = ap_l_16.tick(sp_f_l);
+  sp_f_r = ap_r_16.tick(sp_f_r);
+  sp_f_l = ap_l_17.tick(sp_f_l);
+  sp_f_r = ap_r_17.tick(sp_f_r);
+  sp_f_l = ap_l_18.tick(sp_f_l);
+  sp_f_r = ap_r_18.tick(sp_f_r);
+  sp_f_l = ap_l_19.tick(sp_f_l);
+  sp_f_r = ap_r_19.tick(sp_f_r);
+  sp_f_l = ap_l_20.tick(sp_f_l);
+  sp_f_r = ap_r_20.tick(sp_f_r);
+  sp_f_l = ap_l_21.tick(sp_f_l);
+  sp_f_r = ap_r_21.tick(sp_f_r);
+  sp_f_l = ap_l_22.tick(sp_f_l);
+  sp_f_r = ap_r_22.tick(sp_f_r);
+  sp_f_l = ap_l_23.tick(sp_f_l);
+  sp_f_r = ap_r_23.tick(sp_f_r);
+  sp_f_l = ap_l_24.tick(sp_f_l);
+  sp_f_r = ap_r_24.tick(sp_f_r);
+  sp_f_l = ap_l_25.tick(sp_f_l);
+  sp_f_r = ap_r_25.tick(sp_f_r);
+  sp_f_l = ap_l_26.tick(sp_f_l);
+  sp_f_r = ap_r_26.tick(sp_f_r);
+  sp_f_l = ap_l_27.tick(sp_f_l);
+  sp_f_r = ap_r_27.tick(sp_f_r);
+  sp_f_l = ap_l_28.tick(sp_f_l);
+  sp_f_r = ap_r_28.tick(sp_f_r);
+  sp_f_l = ap_l_29.tick(sp_f_l);
+  sp_f_r = ap_r_29.tick(sp_f_r);
+  sp_f_l = ap_l_30.tick(sp_f_l);
+  sp_f_r = ap_r_30.tick(sp_f_r);
+  sp_f_l = ap_l_31.tick(sp_f_l);
+  sp_f_r = ap_r_31.tick(sp_f_r);
+  sp_f_l = ap_l_32.tick(sp_f_l);
+  sp_f_r = ap_r_32.tick(sp_f_r);
+);
+
+//POST FILTER
+f_post.pr_needs_update() == 1 ? (
+  lp_p_l.set_coefficients(get_post_filter(f_post_p), f_p_bw, 0);
+  lp_p_r.set_coefficients(get_post_filter(f_post_p), f_p_bw, 0);
+);
+sp_f_l = lp_p_l.tick(sp_f_l);
+sp_f_r = lp_p_r.tick(sp_f_r);
+
+//OUTPUT
+sp_out_l = sp_f_l; sp_out_r = sp_f_r;
+spl0 = spl0*(1 - wet_p) + sp_out_l*wet_p;
+spl1 = spl1*(1 - wet_p) + sp_out_r*wet_p;
+
+@gfx 539 383
+bg_r = 0.1; bg_g = 0.1; bg_b = 0.1;
+c1_r = 0.9; c1_g = 0.9; c1_b = 0.9; 
+ui.margin = 10;
+ui.fill_alpha = 0.2;
+
+gfx_set(bg_r, bg_g, bg_b, 1);
+gfx_rect(0, 0, gfx_w, gfx_h);
+sizzle_update();
+xs = ui.margin*4; ys = ui.margin*4;
+
+cr_bar_width = 18;
+cr_bar_height = 246;
+
+//CRUSHERS
+gfx_col(c1_r, c1_g, c1_b, 1);
+j = 1; bxs = xs;
+loop(10, 
+  xl = bxs + tw;
+  slider_v(j, bxs, ys, cr_bar_width, cr_bar_height, 0, 64, crusher_mem[j-1], 0);
+  ui.r == 1 ? (
+    crusher_mem[j-1] = ui.rv;
+  );
+  bxs += cr_bar_width;
+  j == 1 ? (
+    w_down_x = ui.nl_x;
+    w_down_y = ui.nl_y;    
+  );
+  j += 1;
+);
+separator_alpha = 0.2;
+gfx_col(c1_r, c1_g, c1_b, separator_alpha);
+sizzle_separator(ui.sl_x + 3, ui.sl_y, 0, cr_bar_height);
+w_right_x = ui.sl_x + 3; 
+w_right_y = ui.sl_y; 
+
+//MIX - FILTER
+w_right_width = 100;
+w_right_font_size = 20;
+w_right_small_font_size = 15;
+gfx_col(c1_r, c1_g, c1_b, 1);
+sizzle_label_rect(w_right_x, w_right_y, w_right_width, 18, "Mix", w_right_small_font_size*1.2, 1, 0, 0);
+w_right_2_x = ui.sl_x; w_right_2_y = ui.sl_y;
+slider_v(14, w_right_x, ui.nl_y, w_right_width, w_right_width, 0, 1, mix.pr_get(), 1); //PARAMETER - Mix
+ui.r == 1 ? (
+  mix.pr_set(ui.rv);  
+);
+sizzle_label_rect(ui.nl_x, ui.nl_y, w_right_width, 18, "Filter", w_right_small_font_size*1.2, 1, 1, 0);
+ui.nl_y -= 5;
+
+gfx_col(c1_r, c1_g, c1_b, 1);
+sizzle_label_rect(ui.nl_x, ui.nl_y, w_right_width/2, 18, "Pre", w_right_small_font_size, 1, -1, 0);
+sizzle_label_rect(w_right_x + w_right_width/2, ui.sl_y, w_right_width/2, 18, "Post", w_right_small_font_size, 1, 2, 0);
+
+filter_size = (w_right_width - ui.margin)/2;
+slider_v(12, w_right_x, ui.nl_y, filter_size, filter_size, 0, 1, f_pre.pr_get(), 1); //PARAMETER - Pre Filter
+ui.r == 1 ? (
+  f_pre.pr_set(ui.rv);  
+);
+slider_v(13, ui.sl_x, ui.sl_y, filter_size, filter_size, 0, 1,  f_post.pr_get(), 1); //PARAMETER - Post Filter
+ui.r == 1 ? (
+  f_post.pr_set(ui.rv);  
+);
+
+//DRY-WET
+w_right_2_width = 40;
+gfx_col(c1_r, c1_g, c1_b, separator_alpha);
+sizzle_separator(w_right_2_x + 3, w_right_2_y, 0, cr_bar_height);
+gfx_col(c1_r, c1_g, c1_b, 1);
+ui.sl_x += 3;
+
+sizzle_label_rect(ui.sl_x, ui.sl_y, w_right_2_width, 18, "Wet", w_right_small_font_size*1.2, 1, 1, 0);
+slider_v(15, ui.nl_x, ui.nl_y, w_right_2_width, cr_bar_height - 18 - ui.margin, 0, 1, wet.pr_get(), 1); //PARAMETER - Dry/Wet
+ui.r == 1 ? (
+  wet.pr_set(ui.rv);
+);
+gfx_col(c1_r, c1_g, c1_b, separator_alpha);
+sizzle_separator(ui.sl_x+3, w_right_2_y, 0, cr_bar_height);
+laser_disp_x = ui.sl_x + 3;
+laser_disp_y = ui.sl_y;
+
+gfx_col(c1_r, c1_g, c1_b, separator_alpha);
+sizzle_separator(w_down_x, w_down_y+3, laser_disp_x - w_down_x - ui.margin, 0);
+w_down_y += 6;
+
+//LASER
+gfx_col(c1_r, c1_g, c1_b, 1);
+laser_slider_w = laser_disp_x - w_down_x - ui.margin - 65;
+slider_h(16, ui.nl_x, ui.nl_y + 3, laser_slider_w, 30, 0, 4, laser, 0); //PARAMETER - LASER
+ui.r == 1 ? (
+  laser_v = floor(ui.rv + 0.5);
+  laser_v != laser ? (
+    laser = laser_v;
+    slider(5) = laser_v;
+    slider_automate(5);
+    flush_filters = 1;
+  );
+);
+
+//MIDI SWITCH
+ma_xs = ui.nl_x; ma_ys = ui.nl_y - ui.margin;
+midi_b_x = ui.sl_x; midi_b_y = ui.sl_y;
+sizzle_label_rect(w_down_x, w_down_y + ui.margin, laser_slider_w, 30, "LASER", 13, 1, 0, 0);
+sizzle_checkbox_full(17, midi_b_x, midi_b_y, laser_disp_x - w_down_x - laser_slider_w - 2*ui.margin, 
+30, use_midi, "MIDI", 13); //PARAMETER - MIDI
+ui.r == 1 ? (
+  use_midi = 1 - use_midi;
+  slider(6) = use_midi;
+  slider_automate(6);
+);
+
+//MARKERS
+gfx_col(c1_r, c1_g, c1_b, 1);
+ma_t = 0; ma_i = 0;
+loop(5, 
+  ma_xp = lerp(ma_xs, ma_xs + laser_slider_w, ma_t);
+  sizzle_line(ma_xp, ma_ys, 0, -4, 5);
+  gfx_x = ma_xp; gfx_y = ma_ys + 5;
+  center = ma_t > 0; center = ma_t == 1 ? 2 : center;
+  label = "";
+  ma_i == 0 ? (
+    label = "Off";
+  ):(ma_i == 1) ? (
+    label = "4x";
+  ):(ma_i == 2) ? (
+    label = "8x";  
+  ):(ma_i == 3) ? (
+    label = "16x";
+  ):(ma_i == 4) ? (
+    label = "32x";  
+  );
+  sizzle_label(label, 12, center);
+  ma_t += 1/4; ma_i += 1;
+);
+
+//COSMETIC LASER
+laser_disp_ww = 60;
+laser_disp_hh = cr_bar_height + 56;
+gfx_out_rect(laser_disp_x, laser_disp_y, laser_disp_ww, laser_disp_hh, 1);
+gfx_col(1, 0, 0.3, 1);
+sizzle_line_cosmetic(
+laser_disp_x + laser_disp_ww/2,
+laser_disp_y + 1,
+0, laser_disp_hh - 2, 10, 20
+);
+
+
