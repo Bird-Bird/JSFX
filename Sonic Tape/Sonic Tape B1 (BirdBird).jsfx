@@ -5,7 +5,7 @@ author: BirdBird
 changelog: Beta 1 
 provides:
   dependencies/*
-  Sonic Tape B1.jsfx.rpl
+  Sonic Tape B1 (BirdBird).jsfx.rpl
 about: Plugin that emulates the wow and flutter effects found in analog tape machines.
 
 in_pin:left input
