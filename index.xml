@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="BirdBird JSFX" commit="1500dbedfb9a4ff274b24c9521cfbef5326bf25d">
+<index version="1" name="BirdBird JSFX" commit="b07156f32a27ec9425c237f8860a45e08b14ea56">
   <category name="Sonic Tape">
-    <reapack name="Sonic Tape B1.jsfx" type="effect" desc="Sonic Tape B1">
+    <reapack name="Sonic Tape B1 (BirdBird).jsfx" type="effect" desc="Sonic Tape B1 (BirdBird)">
       <metadata>
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
 {\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
@@ -11,13 +11,13 @@
 }
 ]]></description>
       </metadata>
-      <version name="0.5" author="BirdBird" time="2022-07-26T19:45:20Z">
+      <version name="0.5.1" author="BirdBird" time="2022-07-26T21:01:22Z">
         <changelog><![CDATA[Beta 1]]></changelog>
-        <source>https://github.com/Bird-Bird/JSFX/raw/1500dbedfb9a4ff274b24c9521cfbef5326bf25d/Sonic%20Tape/Sonic%20Tape%20B1.jsfx</source>
-        <source file="dependencies/birdbird_buffer.jsfx-inc">https://github.com/Bird-Bird/JSFX/raw/1500dbedfb9a4ff274b24c9521cfbef5326bf25d/Sonic%20Tape/dependencies/birdbird_buffer.jsfx-inc</source>
-        <source file="dependencies/birdbird_parameters.jsfx-inc">https://github.com/Bird-Bird/JSFX/raw/1500dbedfb9a4ff274b24c9521cfbef5326bf25d/Sonic%20Tape/dependencies/birdbird_parameters.jsfx-inc</source>
-        <source file="dependencies/birdbird_sizzle_gui.jsfx-inc">https://github.com/Bird-Bird/JSFX/raw/1500dbedfb9a4ff274b24c9521cfbef5326bf25d/Sonic%20Tape/dependencies/birdbird_sizzle_gui.jsfx-inc</source>
-        <source file="Sonic Tape B1.jsfx.rpl">https://github.com/Bird-Bird/JSFX/raw/1500dbedfb9a4ff274b24c9521cfbef5326bf25d/Sonic%20Tape/Sonic%20Tape%20B1.jsfx.rpl</source>
+        <source>https://github.com/Bird-Bird/JSFX/raw/b07156f32a27ec9425c237f8860a45e08b14ea56/Sonic%20Tape/Sonic%20Tape%20B1%20(BirdBird).jsfx</source>
+        <source file="dependencies/birdbird_buffer.jsfx-inc">https://github.com/Bird-Bird/JSFX/raw/b07156f32a27ec9425c237f8860a45e08b14ea56/Sonic%20Tape/dependencies/birdbird_buffer.jsfx-inc</source>
+        <source file="dependencies/birdbird_parameters.jsfx-inc">https://github.com/Bird-Bird/JSFX/raw/b07156f32a27ec9425c237f8860a45e08b14ea56/Sonic%20Tape/dependencies/birdbird_parameters.jsfx-inc</source>
+        <source file="dependencies/birdbird_sizzle_gui.jsfx-inc">https://github.com/Bird-Bird/JSFX/raw/b07156f32a27ec9425c237f8860a45e08b14ea56/Sonic%20Tape/dependencies/birdbird_sizzle_gui.jsfx-inc</source>
+        <source file="Sonic Tape B1 (BirdBird).jsfx.rpl">https://github.com/Bird-Bird/JSFX/raw/b07156f32a27ec9425c237f8860a45e08b14ea56/Sonic%20Tape/Sonic%20Tape%20B1%20(BirdBird).jsfx.rpl</source>
       </version>
     </reapack>
   </category>
