@@ -1,0 +1,462 @@
+desc:Sonic Tape B1
+tags: Modulation, Delay
+version: 0.5
+author: BirdBird
+changelog: Beta 1 
+provides:
+  dependencies/*
+  Sonic Tape B1.jsfx.rpl
+about: Plugin that emulates the wow and flutter effects found in analog tape machines.
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+import ./dependencies/birdbird_sizzle_gui.jsfx-inc
+import ./dependencies/birdbird_parameters.jsfx-inc
+import ./dependencies/birdbird_buffer.jsfx-inc
+
+//>P - SLIDER_DEF
+slider1:0.515<0,1,0.000010>-Wow Amount (Left)
+slider2:0.126<0,1,0.000010>-Wow Speed (Left)
+slider3:0.169<0,1,0.000010>-Flutter Amount (Left)
+slider4:0.737<0,1,0.000010>-Flutter Speed (Left)
+slider5:0.124<0,1,0.000010>-Feedback (Left)
+
+slider6:0.515<0,1,0.000010>-Wow Amount (Right)
+slider7:0.126<0,1,0.000010>-Wow Speed (Right)
+slider8:0.169<0,1,0.000010>-Flutter Amount (Right)
+slider9:0.737<0,1,0.000010>-Flutter Speed (Right)
+slider10:0.124<0,1,0.000010>-Feedback (Right)
+
+slider11:0.884<0,1,0.000010>-Wet
+slider12:0.5<0,1,0.000010>-Jam
+slider13:1<0,1,1.000000>-Stereo Link
+
+options:gfx_hz=120
+
+@slider
+//>P - SLIDER
+wow_l.pr_slider_change();
+wow_spd_l.pr_slider_change();
+flutter_l.pr_slider_change();
+flutter_spd_l.pr_slider_change();
+fb_l.pr_slider_change();
+wow_r.pr_slider_change();
+wow_spd_r.pr_slider_change();
+flutter_r.pr_slider_change();
+flutter_spd_r.pr_slider_change();
+fb_r.pr_slider_change();
+wet.pr_slider_change();
+jam.pr_slider_change();
+link =  slider13;
+
+
+@init
+ext_noinit = 1.0;
+ui.margin = 10;
+ui.fill_alpha = 0.16;
+ui.separator_alpha = 0.2;
+ui.disabled_a = 0.3;
+ui.disabled_alpha = 1;
+glide_time = 20;
+display_size = 270;
+srate_mult = srate/44100;
+max_delay_const = 50*srate*0.001;
+link_stereo = -1;
+slider_jam = 1;
+ui.theme = 1;
+version = 0.5;
+
+//>P - INIT
+wow_l.pr_interp(glide_time, 0, 1);
+wow_spd_l.pr_interp(glide_time, 0, 2);
+flutter_l.pr_interp(glide_time, 0, 3);
+flutter_spd_l.pr_interp(glide_time, 0, 4);
+fb_l.pr_interp(glide_time, 0, 5);
+wow_r.pr_interp(glide_time, 0.5, 6);
+wow_spd_r.pr_interp(glide_time, 0.5, 7);
+flutter_r.pr_interp(glide_time, 0.5, 8);
+flutter_spd_r.pr_interp(glide_time, 0.5, 9);
+fb_r.pr_interp(glide_time, 0.5, 10);
+wet.pr_interp(glide_time, 1, 11);
+jam.pr_interp(50, 0.5, -1);
+link = 1;
+link_interp.pr_interp(100, 0, -1);
+
+
+
+//WOW
+o_phs = 2*$pi/srate;
+wow_phs_l = 0; wow_phs_r = 0;
+wow_freq_s = 0.1; wow_freq_e = 300;
+wow_bw = log(wow_freq_e/wow_freq_s)/log(2);
+function map_wow_2(t)
+(
+  wow_freq_s*2^(wow_bw*(t^1));
+);
+wow_bw = log(300/4)/log(2);
+function map_wow(t) local(b1)
+(
+  b1 = 0.63;
+  t < b1 ? (
+    t = map_range(t, 0, b1, 0, 1);
+    lerp(0.05, 4, t^1.3);
+  ) : (
+    t = map_range(t, b1, 1, 0, 1);
+    4*2^(wow_bw*(t^1.3));
+  );
+);
+
+function map_flutter(t) local(b1)
+(
+  b1 = 0.6;
+  t < b1 ? (
+    t = map_range(t, 0, b1, 0, 1);
+    lerp(0, 0.002, t^1.9);
+  ) : (
+    t = map_range(t, b1, 1, 0, 1);
+    lerp(0.002, 0.9, t^8);
+  ); 
+);
+function map_flutter_gain(t) local(b1)
+(
+  b1 = 0.30; b2 = 0.70;
+  t < b1 ? (
+    t = map_range(t, 0, b1, 0, 1);
+    lerp(0, 0.02, t);
+  ) : (t < b2) ? (
+    t = map_range(t, b1, b2, 0, 1);
+    lerp(0.02, 0.08, t);
+  ) : (
+    t = map_range(t, b2, 1, 0, 1);
+    lerp(0.08, 1, t);
+  );
+);
+function map_jam(t)
+(
+  t < 0.5 ? (
+    t*2;
+  ) : (
+    t = map_range(t, 0.5, 1, 0, 1);
+    lerp(1, 16, t);
+  );
+);
+
+//FLUTTER - L
+fl_buf_l.buffer(0, srate/2);
+fl_buf_l.bf_fill_noise();
+
+//DISPLAY - L
+disp_l_mem = fl_buf_l.be + 1;
+disp_l.buffer(disp_l_mem + 1, disp_l_mem + srate);
+
+//DELAY - L
+delay_l_mem = disp_l.be + 1;
+delay_l.buffer(delay_l_mem, delay_l_mem + srate);
+
+//FLUTTER - R
+fl_r_mem = delay_l.be + 1;
+fl_buf_r.buffer(fl_r_mem, fl_r_mem + srate/2);
+fl_buf_r.bf_fill_noise();
+
+//DISPLAY - R
+disp_r_mem = fl_buf_r.be + 1;
+disp_r.buffer(disp_r_mem + 1, disp_r_mem + srate);
+
+//DELAY - R
+delay_r_mem = disp_r.be + 1;
+delay_r.buffer(delay_r_mem, delay_r_mem + srate);
+
+
+@serialize
+file_var(0, ui.theme);
+file_var(0, version);
+
+
+@sample
+
+//>P - SAMPLE
+wow_l.pr_update();
+wow_spd_l.pr_update();
+flutter_l.pr_update();
+flutter_spd_l.pr_update();
+fb_l.pr_update();
+wow_r.pr_update();
+wow_spd_r.pr_update();
+flutter_r.pr_update();
+flutter_spd_r.pr_update();
+fb_r.pr_update();
+wet.pr_update();
+jam.pr_update();
+link_interp.pr_update();
+link_interp.pr_needs_update() == 0 ? (
+  link_interp.pr_force_set(link);
+);
+
+wow_l_p = wow_l.pr_get()^3;
+wow_spd_l_p = map_wow(wow_spd_l.pr_get());
+flutter_l_p = map_flutter_gain(flutter_l.pr_get());
+flutter_spd_l_p = map_flutter(flutter_spd_l.pr_get());
+fb_l_p = fb_l.pr_get();
+
+wow_r_p = wow_r.pr_get()^3;
+wow_spd_r_p =  map_wow(wow_spd_r.pr_get());
+flutter_r_p =  map_flutter_gain(flutter_r.pr_get());
+flutter_spd_r_p = map_flutter(flutter_spd_r.pr_get());
+fb_r_p = fb_r.pr_get();
+
+wet_p = wet.pr_get();
+jam_p = jam.pr_get();
+max_delay = max_delay_const*map_jam(jam_p);
+
+dry_l = spl0;
+dry_r = spl1;
+
+m_lock != 2 ? (
+  jam.pr_set(0.5);
+);
+
+//WOW
+wow_phs_l += o_phs*wow_spd_l_p;
+wow_l_o_sin = sin(wow_phs_l);
+wow_l_o = (wow_l_o_sin/2 + 0.5)*wow_l_p;
+
+wow_phs_r += o_phs*wow_spd_r_p;
+wow_r_o_sin = sin(wow_phs_r);
+wow_r_o = (wow_r_o_sin/2 + 0.5)*wow_r_p;
+
+
+//FLUTTER
+fl_raw = fl_buf_l.bf_move((flutter_spd_l_p)/(srate_mult));
+fl = fl_raw*flutter_l_p;
+fr_raw = fl_buf_r.bf_move(flutter_spd_r_p/srate_mult);
+fr = fr_raw*flutter_r_p;
+
+
+//DISPLAY BUFFER
+disp_v_l = wow_l_o_sin*wow_l.pr_get() + (fl_raw * flutter_l.pr_get() - flutter_l.pr_get()/2)/2;
+disp_l.bf_write(disp_v_l);
+disp_v_r = wow_r_o_sin*wow_r.pr_get() + (fr_raw * flutter_r.pr_get() - flutter_r.pr_get()/2)/2;
+disp_r.bf_write(disp_v_r);
+
+
+//DELAYS
+s_o = 30*srate_mult;
+read_o_l = (wow_l_o + fl/4)*max_delay;
+buf_read_l = delay_l.bf_read(read_o_l + s_o);
+delay_l.bf_write(spl0 + buf_read_l*fb_l_p);
+spl0 = (1 - wet_p)*dry_l + buf_read_l*wet_p;
+
+fb_r_link = lerp(fb_r_p, fb_l_p, link_interp.pr_get());
+read_o_r = lerp((wow_r_o + fr/4)*max_delay, read_o_l, link_interp.pr_get());
+buf_read_r = delay_r.bf_read(read_o_r + s_o);
+delay_r.bf_write(spl1 + buf_read_r*fb_r_link);
+spl1 = (1 - wet_p)*dry_r + buf_read_r*wet_p;
+
+
+@gfx 710 670
+function draw_buffer(xa, ya, w, r_buf) local(i, x, y, lx, ly, xs, ys, t)
+(
+  i = 0;
+  xs = xa; ys = ya + w/2;
+  lx = x; ly = y;
+  bf_o = r_buf == 0 ? disp_l.bf_get_norm() : disp_r.bf_get_norm();
+  loop(w,
+    t = i/w + bf_o;
+    t = t - floor(t);
+    v = r_buf == 0 ? disp_l.bs[t*disp_l.len] : disp_r.bs[t*disp_r.len];
+    v = max(min(v, 1), -1);
+    x = xs + i;
+    y = ys + (v)*(w/2);
+    i != 0 ? (
+      gfx_set(gfx_c.r, gfx_c.g, gfx_c.b, gfx_c.a*0.1);
+      gfx_line(x, ys, x, y);
+      gfx_set(gfx_c.r, gfx_c.g, gfx_c.b, gfx_c.a*1);
+      gfx_line(lx, ly, x, y);
+    );
+    lx = x; ly = y;
+    i += 1;
+  );
+);
+
+ui.theme == 0 ? (
+  bg_r = 255/256; bg_g = 249/256; bg_b = 232/256;
+  cyr = 0.8*255/256; cyg = 0.8*193/256; cyb = 36/256;
+  cyr = 66/256; cyg = 181/256; cyb = 247/256;
+  ui.supress_noise = 0;
+) : (
+  bg_r = 0.15/2; bg_g = 0.15/2; bg_b = 0.15/2;
+  cyr = 255/256; cyg = 193/256; cyb = 36/256;
+  ui.supress_noise = 1;
+);
+cr = 255/256; cg = 0/256; cb = 100/256;
+gfx_set(bg_r, bg_g, bg_b, 1);
+gfx_rect(0, 0, gfx_w, gfx_h);
+sizzle_update();
+xs = ui.margin*2; ys = ui.margin*2;
+gui_h = 637;
+slider_size_side = 50;
+link_size = 46;
+lb_h = 20;
+fb_s_h = 35;
+lb_o_y = 40;
+fb_y_o = 20;
+
+lb_o_y = 35;
+fb_y_o = 15;
+gui_h = 630;
+fb_s_h = 40;
+
+//DRY_WET
+gfx_col(cr, cg, cb, 1);
+slider_v(1, xs, ys, slider_size_side, gui_h, 0, 1, wet.pr_get(), 1); //PARAMETER - DRY/WET
+ui.r == 1 ? (
+  wet.pr_set(ui.rv);
+);
+mw_x = ui.sl_x; mw_y = ui.sl_y;
+sizzle_label_rect(xs, ys, slider_size_side, 30, "WET", 22, 1, 0, 0);
+
+//DISPLAYS
+gfx_out_rect(mw_x, mw_y, display_size, display_size, 1);
+draw_buffer(mw_x, mw_y, display_size, 0);
+pw_x = ui.nl_x; pw_y = ui.nl_y;
+draw_buffer(ui.sl_x, ui.sl_y, display_size, link == 1 ? 0 : 1);
+gfx_out_rect(ui.sl_x, ui.sl_y, display_size, display_size, 1);
+
+//JAM
+jam_x = ui.sl_x; jam_y = ui.sl_y;
+slider_v_jam(2, jam_x, jam_y, slider_size_side, gui_h - fb_s_h - 10, 0, 1, jam.pr_get(), 1); //PARAMETER - Jam
+ui.r == 1 ? (
+  jam.pr_set(ui.rv);
+);
+jam_label_y = jam_y + gui_h - fb_s_h + 3;
+sizzle_label_rect(jam_x, jam_label_y, slider_size_side, 30, "JAM", 22, 1, -1, -1);
+sizzle_invisible_button(17, jam_x, jam_label_y, slider_size_side, 30);
+ui.r == 1 ? (
+  ui.theme = 1 - ui.theme;
+);
+sizzle_line(jam_x, gui_h + ys, slider_size_side, 0, 20);
+sizzle_line(jam_x + slider_size_side, gui_h + ys, 0, -slider_size_side + 10, 20);
+gui_w = ui.sl_x - ui.margin - xs;
+aaaex = jam_x + slider_size_side; aaaey = gui_h + ys;
+
+//SEPARATORS - LINK
+sep_size_top = (display_size*2 + ui.margin)/2 - link_size/2 - ui.margin;
+disp_mid_w = (display_size*2 + ui.margin)/2;
+sizzle_separator(pw_x, pw_y, sep_size_top, 0);
+mid_sep_x = pw_x + disp_mid_w;
+pws_x = ui.nl_x; pws_y = ui.nl_y;
+sizzle_checkbox_full(3, ui.sl_x, ui.sl_y, link_size, 25, link, "LINK", 13); //PARAMETER - Link
+ui.r == 1 ? (
+  link = 1 - link;
+  slider13 = link;
+  slider_automate(slider(13));
+  link_interp.pr_set(link);
+);
+mid_sep_y = ui.nl_y;
+sizzle_separator(ui.sl_x, pw_y, sep_size_top, 0);
+sizzle_separator(mid_sep_x, mid_sep_y, 0, gui_h - mid_sep_y + ys);
+
+//L - CONTROLS
+label_size = (disp_mid_w - 3*ui.margin)/2;
+gfx_col(cr, cg, cb, 1);
+sizzle_label_rect(pws_x, pws_y + lb_o_y, label_size, 20, "WOW", 25, 1, 0, 0);
+ctrl_nl_x = ui.nl_x;
+gfx_col(cyr, cyg, cyb, 1);
+sizzle_label_rect(ui.sl_x, pws_y + lb_o_y, label_size + 20, 20, "FLUTTER", 25, 1, 0, 0);
+s_ctrl_size = (label_size - ui.margin)/2;
+s_full_h = ys + gui_h - ui.nl_y - fb_y_o;
+s_ctrl_h = s_full_h - fb_s_h - lb_h - ui.margin*1.5; //OFFSET
+gfx_col(cr, cg, cb, 1);
+slider_v_thin(4, ctrl_nl_x, ui.nl_y, s_ctrl_size, s_ctrl_h,  0, 1, wow_l.pr_get(), 1); //PARAMETER - Wow Depth
+ui.r == 1 ? (
+  wow_l.pr_set(ui.rv);
+);
+lb_x = ui.nl_x; lb_y = ui.nl_y;
+slider_v_thin(5, ui.sl_x, ui.sl_y, s_ctrl_size, s_ctrl_h,  0, 1, wow_spd_l.pr_get(), 1); //PARAMETER - Wow Speed
+ui.r == 1 ? (
+  wow_spd_l.pr_set(ui.rv);
+);
+sizzle_separator(ui.sl_x, ui.sl_y, 0, s_ctrl_h);
+
+gfx_col(cyr, cyg, cyb, 1);
+slider_v_thin(6, ui.sl_x, ui.sl_y, s_ctrl_size, s_ctrl_h,  0, 1, flutter_l.pr_get(), 1); //PARAMETER - Flutter Depth
+ui.r == 1 ? (
+  flutter_l.pr_set(ui.rv);
+);
+slider_v_thin(7, ui.sl_x, ui.sl_y, s_ctrl_size, s_ctrl_h,  0, 1, flutter_spd_l.pr_get(), 1); //PARAMETER - Flutter Speed
+ui.r == 1 ? (
+  flutter_spd_l.pr_set(ui.rv);
+);
+gfx_col(cr, cg, cb, 1);
+sizzle_label_rect(lb_x, lb_y-5,  s_ctrl_size, lb_h, "AMT", 16, 1, 0, 0);
+fb_x = ui.nl_x; fb_y = ui.nl_y + fb_y_o;
+sizzle_label_rect(ui.sl_x, ui.sl_y,  s_ctrl_size, lb_h, "SPD", 16, 1, 0, 0);
+gfx_col(cyr, cyg, cyb, 1);
+sizzle_label_rect(ui.sl_x + ui.margin, ui.sl_y,  s_ctrl_size, lb_h, "AMT", 16, 1, 0, 0);
+sizzle_label_rect(ui.sl_x, ui.sl_y,  s_ctrl_size, lb_h, "SPD", 16, 1, 0, 0);
+
+gfx_col(cr, cg, cb, 1);
+slider_h(8, fb_x, fb_y, disp_mid_w - ui.margin, fb_s_h,  0, 1, fb_l.pr_get(), 1); //PARAMETER - Feedback
+ui.r == 1 ? (
+  fb_l.pr_set(ui.rv);
+);
+gfx_x = fb_x + 5; gfx_y = fb_y + 5;
+sizzle_label("Feedback", 17, 0);
+
+//R - CONTROLS
+link == 1 ? (
+  sizzle_disable();
+);
+gfx_col(cr, cg, cb, 1);
+sizzle_label_rect(pws_x + disp_mid_w + ui.margin, pws_y + lb_o_y, label_size, 20, "WOW", 25, 1, 0, 0);
+ctrl_nl_x = ui.nl_x;
+gfx_col(cyr, cyg, cyb, 1);
+sizzle_label_rect(ui.sl_x, pws_y + lb_o_y, label_size + 20, 20, "FLUTTER", 25, 1, 0, 0);
+s_ctrl_size = (label_size - ui.margin)/2;
+s_full_h = ys + gui_h - ui.nl_y - fb_y_o;
+s_ctrl_h = s_full_h - fb_s_h - lb_h - ui.margin*1.5;
+gfx_col(cr, cg, cb, 1);
+slider_v_thin(9, ctrl_nl_x, ui.nl_y, s_ctrl_size, s_ctrl_h,  0, 1, wow_r.pr_get(), 1); //PARAMETER - Wow Depth
+ui.r == 1 ? (
+  wow_r.pr_set(ui.rv);
+);
+lb_x = ui.nl_x; lb_y = ui.nl_y;
+slider_v_thin(10, ui.sl_x, ui.sl_y, s_ctrl_size, s_ctrl_h,  0, 1, wow_spd_r.pr_get(), 1); //PARAMETER - Wow Speed
+ui.r == 1 ? (
+  wow_spd_r.pr_set(ui.rv);
+);
+sizzle_separator(ui.sl_x, ui.sl_y, 0, s_ctrl_h);
+
+gfx_col(cyr, cyg, cyb, 1);
+slider_v_thin(11, ui.sl_x, ui.sl_y, s_ctrl_size, s_ctrl_h,  0, 1, flutter_r.pr_get(), 1); //PARAMETER - Flutter Depth
+ui.r == 1 ? (
+  flutter_r.pr_set(ui.rv);
+);
+slider_v_thin(12, ui.sl_x, ui.sl_y, s_ctrl_size, s_ctrl_h,  0, 1, flutter_spd_r.pr_get(), 1); //PARAMETER - Flutter Speed
+ui.r == 1 ? (
+  flutter_spd_r.pr_set(ui.rv);
+);
+gfx_col(cr, cg, cb, 1);
+sizzle_label_rect(lb_x, lb_y-5,  s_ctrl_size, lb_h, "AMT", 16, 1, 0, 0);
+fb_x = ui.nl_x; fb_y = ui.nl_y + fb_y_o;
+sizzle_label_rect(ui.sl_x, ui.sl_y,  s_ctrl_size, lb_h, "SPD", 16, 1, 0, 0);
+gfx_col(cyr, cyg, cyb, 1);
+sizzle_label_rect(ui.sl_x + ui.margin, ui.sl_y,  s_ctrl_size, lb_h, "AMT", 16, 1, 0, 0);
+sizzle_label_rect(ui.sl_x, ui.sl_y,  s_ctrl_size, lb_h, "SPD", 16, 1, 0, 0);
+
+gfx_col(cr, cg, cb, 1);
+slider_h(13, fb_x, fb_y, disp_mid_w - ui.margin, fb_s_h,  0, 1, fb_r.pr_get(), 1); //PARAMETER - Feedback
+ui.r == 1 ? (
+  fb_r.pr_set(ui.rv);
+);
+gfx_x = fb_x + 5; gfx_y = fb_y + 5;
+link == 1 ? (
+  sizzle_enable();
+);
+
+
+
+

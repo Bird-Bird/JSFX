@@ -1,0 +1,68 @@
+@init
+function map_range(v, s1, s2, e1, e2) local(t)
+(
+  t = (v - s1)/(s2 - s1);
+  e1 + (e2 - e1)*t;
+);
+function hermite(x, y0, y1, y2, y3) local(c0, c1, c2, c3)
+(
+  c0 = y1;
+  c1 = 0.5 * (y2 - y0);
+  c2 = y0 - 2.5 * y1 + 2 * y2 - 0.5 * y3;
+  c3 = 1.5 * (y1 - y2) + 0.5 * (y3 - y0);
+  ((c3 * x + c2) * x + c1) * x + c0;
+);
+function buffer(bs, be)
+(
+  this.bs = bs;
+  this.be = be;
+  this.len = be - bs;
+  this.w = bs;
+);
+function bf_wrap(index) instance(bs, be, len) local(v)
+(
+  index >= be ? (
+    index - len;
+  ):(index < bs) ? (
+    index + len;
+  ):(
+    index;
+  );
+);
+function bf_write(sp) instance(bs, be, w)
+(
+  w[] = sp;
+  w = this.bf_wrap(w+1);
+);
+
+function bf_read(off) instance(bs, be, w) local(xm1, x0, x1, x2)
+(
+  read_pos = this.bf_wrap(w - off);
+  x0 = floor(read_pos);
+  fract = read_pos - x0;
+  xm1 = this.bf_wrap(x0-1);
+  x1  = this.bf_wrap(x0+1);
+  x2  = this.bf_wrap(x0+2);
+  xm1 = xm1[];
+  x0  = x0[];
+  x1  = x1[];
+  x2  = x2[];
+  hermite(fract, xm1, x0, x1, x2);
+);
+function bf_move(spd) instance(bs, be, w) local(v)
+(
+  v = this.bf_read(0);
+  w = this.bf_wrap(w+1*spd);
+  v;
+);
+function bf_fill_noise() instance(bs, len) local(i)
+(
+  i = bs;
+  loop(len,
+    this.bf_write(rand());
+  );
+);
+function bf_get_norm() instance(bs, w, len)
+(
+  (w - bs)/len;
+);
