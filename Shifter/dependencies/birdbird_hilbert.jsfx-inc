@@ -1,0 +1,84 @@
+@init
+/*
+  Hilbert transform approximation using an IIR filter that can be found here: http://yehar.com/blog/?p=368
+*/
+function hilbert_process(z) local(z_i)
+instance(
+o_z0_1, o_z0_2, o_z0_3, o_z0_4, o_z0_5, o_z0_6, o_z0_7, o_z0_8
+o_z1_1, o_z1_2, o_z1_3, o_z1_4, o_z1_5, o_z1_6, o_z1_7, o_z1_8, 
+o_z2_1, o_z2_2, o_z2_3, o_z2_4, o_z2_5, o_z2_6, o_z2_7, o_z2_8,
+i_z1_1, i_z1_2, i_z1_3, i_z1_4, i_z1_5, i_z1_6, i_z1_7, i_z1_8, 
+i_z2_1, i_z2_2, i_z2_3, i_z2_4, i_z2_5, i_z2_6, i_z2_7, i_z2_8, 
+a_1, a_2, a_3, a_4, a_5, a_6, a_7, a_8, 
+re_z1)
+(
+  z_i = z;
+  o_z0_1 = a_1^2*(z + o_z2_1) - i_z2_1;
+  o_z2_1 = o_z1_1; o_z1_1 = o_z0_1;
+  i_z2_1 = i_z1_1; i_z1_1 = z;
+  z = o_z0_1;
+
+  o_z0_2 = a_2^2*(z + o_z2_2) - i_z2_2;
+  o_z2_2 = o_z1_2; o_z1_2 = o_z0_2;
+  i_z2_2 = i_z1_2; i_z1_2 = z;
+  z = o_z0_2;
+
+  o_z0_3 = a_3^2*(z + o_z2_3) - i_z2_3;
+  o_z2_3 = o_z1_3; o_z1_3 = o_z0_3;
+  i_z2_3 = i_z1_3; i_z1_3 = z;
+  z = o_z0_3;
+
+  o_z0_4 = a_4^2*(z + o_z2_4) - i_z2_4;
+  o_z2_4 = o_z1_4; o_z1_4 = o_z0_4;
+  i_z2_4 = i_z1_4; i_z1_4 = z;
+  z = o_z0_4;
+  re = re_z1;
+  re_z1 = z;
+  
+  z = z_i;
+  o_z0_5 = a_5^2*(z + o_z2_5) - i_z2_5;
+  o_z2_5 = o_z1_5; o_z1_5 = o_z0_5;
+  i_z2_5 = i_z1_5; i_z1_5 = z;
+  z = o_z0_5;
+
+  o_z0_6 = a_6^2*(z + o_z2_6) - i_z2_6;
+  o_z2_6 = o_z1_6; o_z1_6 = o_z0_6;
+  i_z2_6 = i_z1_6; i_z1_6 = z;
+  z = o_z0_6;
+
+  o_z0_7 = a_7^2*(z + o_z2_7) - i_z2_7;
+  o_z2_7 = o_z1_7; o_z1_7 = o_z0_7;
+  i_z2_7 = i_z1_7; i_z1_7 = z;
+  z = o_z0_7;
+
+  o_z0_8 = a_8^2*(z + o_z2_8) - i_z2_8;
+  o_z2_8 = o_z1_8; o_z1_8 = o_z0_8;
+  i_z2_8 = i_z1_8; i_z1_8 = z;
+  z = o_z0_8; im = z;
+);
+
+function hilbert()
+(
+  this.a_1 = 0.6923878;
+  this.a_2 = 0.9360654322959;
+  this.a_3 = 0.9882295226860;
+  this.a_4 = 0.9987488452737;
+  this.a_5 = 0.4021921162426;
+  this.a_6 = 0.8561710882420;
+  this.a_7 = 0.9722909545651;
+  this.a_8 = 0.9952884791278;
+);
+
+function hilbert_break(b) local(b1)
+instance(a_1, a_2, a_3, a_4, a_5, a_6, a_7, a_8)
+(
+  b1  = 1 - b; 
+  a_1 = 0.6923878*b1;
+  a_2 = 0.9360654322959*b1;
+  a_3 = 0.9882295226860*b1*b1;
+  a_4 = 0.9987488452737*b1;
+  a_5 = 0.4021921162426*b1;
+  a_6 = 0.8561710882420*b1*b1;
+  a_7 = 0.9722909545651*b1;
+  a_8 = 0.9952884791278*b1*b1*b1;
+);

@@ -1,0 +1,50 @@
+@init
+function pr_interp(speed, default_value, id) 
+(
+  this.speed = 1 - (exp( -1/(speed*srate*0.001)));
+  this.target = default_value;
+  this.cur_val = default_value;
+  this.err_threshold = 0.000000001;
+  this.slider_id = id;
+);
+function pr_get()
+(
+  this.cur_val;
+);
+function pr_set(val) instance(target, slider_id)
+(
+  target = val;
+  slider_id > 0 ? (
+    slider(slider_id) = val;
+    slider_automate(slider(slider_id));
+  );
+);
+function pr_set_slider(val) instance(target, slider_id)
+(
+  target = val;
+);
+function pr_force_set(val) instance(target, cur_val, slider_id)
+(
+  target = val;
+  cur_val = val;
+);
+function pr_update() instance(cur_val, target, speed, err_threshold) local(error)
+(
+  this.cur_val += (target - cur_val)*speed;
+);
+function pr_needs_update() instance(cur_val, target, err_threshold) 
+(
+  error = abs(target - cur_val);
+  error < err_threshold ? (
+    0;
+  ) : (
+    1;
+  );
+);
+function pr_slider_change()
+instance(slider_id)
+(
+  slider_id > 0 ? (
+    this.pr_set_slider(slider(slider_id));
+  );
+);

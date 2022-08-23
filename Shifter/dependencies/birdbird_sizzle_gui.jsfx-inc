@@ -1,0 +1,578 @@
+@init
+function lerp(a, b, t) (a + (b - a)*t);
+n_noise;
+noise_gain = 1;
+ui.noise_clock += 1;
+tau = 2*$pi;
+line_noise_1 = 0;
+line_noise_2 = 0;
+function n_rand(speed)
+(
+  ui.noise_clock % speed == 0 ? (
+    n_noise = rand();
+  );
+  n_noise;
+);
+function sizzle_line(xs ys w h seg) local(g_c, xe, ye, lx, yx, c, noise, tx)
+(
+  ui.supress_noise == 0 ? (
+    xe = xs + w; ye = ys + h;
+    c = 0; lx = xs; ly = ys;
+    segs = seg * noise_gain/4;
+    loop(segs+1, 
+      noise = line_noise_1;
+      ui.noise_clock % 4 == 0 ? (line_noise_1 = rand(noise_gain) - noise_gain/2;);
+      t = c/segs; 
+
+      tx = lerp(xs,xe,t);
+      c != 1 ? (tx += noise);
+
+      ty = lerp(ys,ye,t);
+      noise = line_noise_2;
+      ui.noise_clock % 4 == 0 ? (line_noise_2 = rand(noise_gain) - noise_gain/2;);
+      c != 1 ? (ty += noise);
+
+      gfx_line(lx,ly, tx, ty);    
+      lx = tx;
+      ly = ty;
+      c += 1;
+    );
+  ) : (
+    gfx_line(xs, ys, xs + w, ys + h);
+  )
+);
+function gfx_out_rect(x, y, w, h, t)local(seg)(
+  seg = 20;
+  sizzle_line(x,y,w,0,seg);
+  sizzle_line(x,y,0,h,seg);
+  sizzle_line(x+w,y+h,-w,0,seg);
+  sizzle_line(x+w,y+h,0,-h,seg);
+  ui.sl_x = x + w + ui.margin; ui.sl_y = y;
+  ui.nl_x = x; ui.nl_y = y + h + ui.margin;
+);
+function dist(x1,y1,x2,y2) (
+  sqrt(pow(x2-x1,2) + pow(y2-y1,2));
+);
+function gfx_col(r, g, b, a) 
+(
+  gfx_c.r = r; gfx_c.g = g; gfx_c.b = b; gfx_c.a = a;
+);
+function sizzle_palette(t, a) local(b)
+(
+  //b = 0.4;
+  brightness = 0.22;
+  tr = min(0.5 + brightness + cos((t       )*tau)*0.5,1) + b;
+  tg = min(0.5 + brightness + cos((t + 0.33)*tau)*0.5,1) + b;
+  tb = min(0.5 + brightness + cos((t + 0.67)*tau)*0.5,1) + b;
+  gfx_col(tr, tg, tb, a);
+  gfx_set(tr, tg, tb, a);
+);
+function slider_v(id, x, y, w, h, v_min, v_max, v, draw_value) 
+local(r, rv, strw, strh, m_str, num_dc)
+(
+  ui.r = 0; ui.rv = 0;
+  gfx_set(gfx_c.r, gfx_c.g, gfx_c.b, gfx_c.a);
+  gfx_out_rect(x, y, w, h, 1);
+  t = (v - v_min)/(v_max - v_min);
+
+  mx >= x && mx <= x + w 
+  && my >= y && my <= y + h 
+  && mouse_click == 1 
+  && m_lock == 0 ? (
+    m_lock = id;
+  );
+  m_lock == id ? (
+    t2 = 1 - (my - y)/h;
+    t2 = max(min(t2, 1), 0);
+    ui.r = 1;
+    ui.rv = lerp(v_min, v_max, t2);
+  );
+  gfx_set(gfx_c.r, gfx_c.g, gfx_c.b, ui.fill_alpha);
+  gfx_rect(x, y+(1-t)*h, w, h*t);
+  
+  draw_value == 1 ? (
+    gfx_setfont(1, "Verdana", 15, 'i');
+    m_str = v*100 >= 10 ? "00.0" : "0.0";
+    gfx_measurestr(m_str, strw, strh);
+    gfx_x = x + w/2 - strw/2;
+    gfx_y = y + h/2 - strh/2;
+    gfx_set(gfx_c.r, gfx_c.g, gfx_c.b, gfx_c.a);
+    num_dc = 1-v < 0.001 ? 0 : 1;
+    gfx_drawnumber(v*100, num_dc);
+  );
+  ui.sl_x = x + w + ui.margin; ui.sl_y = y;
+  ui.nl_x = x; ui.nl_y = y + h + ui.margin;
+);
+function sizzle_checkbox(id, x, y, w, v, label) local(h, strw, strh)
+local(cm)
+(
+  ui.r = 0; ui.rv = 0;
+  gfx_setfont(1, "Courier New", w, 'i');
+  gfx_measurestr(label, strw, strh);
+  h = w;
+  mouse_over = mx >= x && mx <= x + w + strw 
+  && my >= y && my <= y + h;
+  mouse_over
+  && mouse_click == 1 
+  && m_lock == 0 ? (
+    ui.r = 1;
+    ui.rv = 1 - floor(v + 0.5);
+  );
+  cm = mouse_over == 1 ? 2 : 1;
+  gfx_set(gfx_c.r/cm, gfx_c.g/cm, gfx_c.b/cm, gfx_c.a);
+  //gfx_out_rect(x, y, w, w, 1);
+  mouse_over == 1 && m_lock == 0 ? (
+    gfx_set(gfx_c.r, gfx_c.g, gfx_c.b, 0.8);
+  );
+  gfx_circle(x + w/2, y + w/2, w/2);
+
+  floor(v + 0.5) == 1 ? (
+    gfx_set(gfx_c.r, gfx_c.g, gfx_c.b, 0.3);
+    //gfx_rect(x+3, y+3, w-5, h-5);
+    mouse_over == 1 && m_lock == 0 ? (
+      gfx_set(gfx_c.r, gfx_c.g, gfx_c.b, 0.2);
+    );
+    gfx_circle(x + w/2, y + w/2, w/2 - 3, 1);
+  );
+  gfx_x = x + w + 5;
+  gfx_y = y;
+  gfx_set(gfx_c.r, gfx_c.g, gfx_c.b, 0.9);
+  mouse_over == 1 && m_lock == 0 ? (
+    gfx_set(gfx_c.r, gfx_c.g, gfx_c.b, 0.8);
+  );
+  gfx_drawstr(label);
+  ui.sl_x = x + w + ui.margin + strw; ui.sl_y = y;
+  ui.nl_x = x; ui.nl_y = y + h + ui.margin;
+);
+function sizzle_update() 
+(
+  //GUI_STATE
+  mx = mouse_x; my = mouse_y; 
+  dx = l_mx - mx; dy = l_my - my;
+  mouse_down = mouse_cap&1; mouse_click = 0;
+  m_alt = mouse_cap&16 > 0;
+  m_ctrl = mouse_cap&4 > 0;
+  l_mouse_down == 1 && mouse_down == 0 ? (
+    m_lock = 0;
+    ui.tracker = 0;
+  ):(l_mouse_down == 0 && mouse_down == 1) ? (
+    mouse_click = 1;
+    ui.click_x = mx;
+    ui.click_y = my;
+  );
+  l_mouse_down = mouse_down;
+  l_mx = mx; l_my = my;
+  ui.noise_clock += 1;
+);
+function sizzle_label(label, size, center) local(strw, strh)
+(
+  gfx_set(gfx_c.r, gfx_c.g, gfx_c.b, gfx_c.a*ui.disabled_alpha);
+  gfx_setfont(1, "Courier New", size, 'i');
+  gfx_measurestr(label, strw, strh);
+  center == 1 ? (
+    gfx_x -= strw/2;
+  ) : (center == 2) ? (
+    gfx_x -= strw;
+  );
+  gfx_drawstr(label);
+);
+function sizzle_label_rect(x, y, w, h, label, size, center, x_o, y_o)
+local(strw, strh)
+(
+  gfx_set(gfx_c.r, gfx_c.g, gfx_c.b, gfx_c.a*ui.disabled_alpha);
+  gfx_x = x + w/2 + x_o; //+ floor(n_rand(3)+0.5);
+  gfx_y = y + h/2 + y_o;
+  gfx_setfont(1, "Courier New", size, 'iu');
+  gfx_measurestr(label, strw, strh);
+  center == 1 ? (
+    gfx_x -= strw/2;
+    gfx_y -= strh/2;
+  );
+  gfx_drawstr(label);
+  ui.sl_x = x + w + ui.margin; ui.sl_y = y;
+  ui.nl_x = x; ui.nl_y = y + h + ui.margin;
+);
+function sizzle_separator(x, y, w, h) (
+  gfx_set(gfx_c.r, gfx_c.g, gfx_c.b, ui.separator_alpha);
+  sizzle_line(x, y, w, h, 20);
+  ui.sl_x = x + w + ui.margin; ui.sl_y = y;
+  ui.nl_x = x; ui.nl_y = y + h + ui.margin;  
+);
+function sizzle_checkbox_full(id, x, y, w, h, v, label, size) local(h, strw, strh, a)
+(
+  ui.r = 0; ui.rv = 0;
+  mx >= x && mx <= x + w 
+  && my >= y && my <= y + h 
+  && mouse_click == 1 
+  && m_lock == 0 ? (
+    ui.r = 1;
+    ui.rv = 1 - v;
+  );
+
+  gfx_set(gfx_c.r, gfx_c.g, gfx_c.b, gfx_c.a);
+  gfx_out_rect(x, y, w, h, 1);
+  v == 1 ? (
+    gfx_set(gfx_c.r, gfx_c.g, gfx_c.b, 0.3);
+    gfx_rect(x+3, y+3, w-5, h-5);
+  );
+  gfx_setfont(1, "Verdana", size, 'i');
+  gfx_measurestr(label, strw, strh);
+  gfx_x = x + w/2 - strw/2;
+  gfx_y = y + h/2 - strh/2;
+  a = v == 1 ? 0.9 : 0.4;
+  gfx_set(gfx_c.r, gfx_c.g, gfx_c.b, a);
+  gfx_drawstr(label);
+  ui.sl_x = x + w + ui.margin; ui.sl_y = y;
+  ui.nl_x = x; ui.nl_y = y + h + ui.margin;
+);
+function sizzle_disable()
+(
+  ui.disabled = 1;
+  ui.disabled_alpha = ui.disabled_a;
+);
+function sizzle_enable()
+(
+  ui.disabled = 0;
+  ui.disabled_alpha = 1;
+);
+
+function slider_v_jam(id, x, y, w, h, v_min, v_max, v, draw_value) 
+local(r, rv, strw, strh, xc)
+(
+  ui.r = 0; ui.rv = 0;
+  gfx_set(gfx_c.r, gfx_c.g, gfx_c.b, gfx_c.a);
+  gfx_out_rect(x, y, w, h, 1);
+  but_w = w; but_h = 23;
+
+  xc = x + w/2;
+  t = (v - v_min)/(v_max - v_min);
+
+  mx >= x && mx <= x + w 
+  && my >= y && my <= y + h 
+  && mouse_click == 1 
+  && m_lock == 0
+  && ui.disabled == 0 ? (
+    m_lock = id;
+  );
+  m_lock == id ? (
+    t2 = 1 - (my - (y + but_h/2))/(h - but_h);
+    t2 = max(min(t2, 1), 0);
+    ui.r = 1;
+    ui.rv = lerp(v_min, v_max, t2);
+  );
+  gfx_set(gfx_c.r, gfx_c.g, gfx_c.b, ui.fill_alpha);
+  t > 0.5 ? (
+    gfx_rect(x, y + h/2 + h*(0.5 - t), w, h*(0.5 - t)*-1);
+  ) : (
+    gfx_rect(x, y + h/2, w, h*(0.5 - t));
+  );
+  
+  
+  gfx_set(bg_r, bg_g, bg_b, 1);
+  but_x = xc - but_w/2; but_y = lerp(y, y + h - but_h, 1-t);
+  gfx_rect(but_x, but_y, but_w, but_h, 1);
+  
+  gfx_set(gfx_c.r, gfx_c.g, gfx_c.b, gfx_c.a);
+  gfx_out_rect(but_x, but_y, but_w, but_h, 1);
+  
+  draw_value == 1 ? (
+    gfx_setfont(1, "Verdana", 15, 'i');
+    gfx_measurestr("0.00", strw, strh);
+    gfx_x = xc - strw/2;
+    gfx_y = but_y - strh/2 + but_h/2;
+    gfx_set(gfx_c.r, gfx_c.g, gfx_c.b, gfx_c.a);
+    gfx_drawnumber(v, 2);
+  );
+  ui.sl_x = x + w + ui.margin; ui.sl_y = y;
+  ui.nl_x = x; ui.nl_y = y + h + ui.margin;
+);
+function sizzle_invisible_button(id, x, y, w, h)
+(
+  ui.r = 0; ui.rv = 0;
+  mx >= x && mx <= x + w 
+  && my >= y && my <= y + h 
+  && mouse_click == 1 
+  && m_lock == 0 ? (
+    ui.r = 1;
+    ui.rv = 1 - v;
+  );
+  ui.sl_x = x + w + ui.margin; ui.sl_y = y;
+  ui.nl_x = x; ui.nl_y = y + h + ui.margin;
+);
+function slider_h_shift(id, x, y, w, h, v_min, v_max, v, spr_g, def_v) 
+local(r, rv, t2, skip, aa_bb, aa_bb_x, sensitivity, t, t2)
+(
+  ui.r = 0; ui.rv = 0; skip = 0;
+  gfx_set(gfx_c.r, gfx_c.g, gfx_c.b, gfx_c.a*ui.disabled_alpha);
+  gfx_out_rect(x, y, w, h, 1);
+  t = (v - v_min)/(v_max - v_min);
+
+  aa_bb_x = mx >= x && mx <= x + w;
+  aa_bb = aa_bb_x
+  && my >= y && my <= y + h;
+  cm = 1;
+  aa_bb == 1 ? (cm = 1.08;);
+  aa_bb 
+  && mouse_click == 1 
+  && m_lock == 0 
+  && ui.disabled == 0 ? (
+    m_alt == 1 ? (
+      ui.r = 1;
+      ui.rv = def_v;
+    ) : (
+      m_lock = id;
+      t2 = (mx - x)/w;
+      t2 = max(min(t2, 1), 0);
+      m_ctrl == 0 ? (
+        ui.r = 1;
+        ui.rv = lerp(-1, 1, t2);
+        skip = 1;
+        ui.tracker = lerp(-1, 1, t2);
+      ) : (
+        ui.tracker = shift_p.target;
+      );
+    );
+  );
+  sensitivity = 1;
+  m_lock == id && skip == 0 ? (
+    ui.r = 1;
+    sensitivity = m_ctrl == 1 ? 0.125 : 1;
+    ui.tracker -= (dx/w)*2*sensitivity;
+    ui.rv = max(min(ui.tracker, 1), -1);
+    cm = 1.08;
+  );
+  gfx_set(gfx_c.r, gfx_c.g, gfx_c.b, 0.16*ui.disabled_alpha*cm);
+  sw = floor((abs(v)/2)*w + 0.5);
+  ssp = floor(x + w/2 + (v < 0 ? -sw : 0) + 0.5);
+  //ssp += 1;
+  gfx_rect(ssp, y, sw, h);
+  gfx_set(gfx_c.r, gfx_c.g, gfx_c.b, gfx_c.a*ui.disabled_alpha*0.5);
+  gfx_line(floor(x + w/2 + 0.5), y, floor(x + w/2 + 0.5), y + h);
+  
+  spr_x = v > 0 ? ssp + sw : ssp;
+  
+  floor(spr_g + 0.5) > 0 ? (
+    spr_x + spr_g < x + w ? (
+      gfx_set(0, 162/255, 232/255, 1);
+      gfx_line(spr_x + spr_g, y, spr_x + spr_g, y + h);
+    );
+    spr_x - spr_g > x ? (
+      gfx_set(237, 28/255, 36/255, 1);
+      gfx_line(spr_x - spr_g, y, spr_x - spr_g, y + h);
+    );
+  ) : (
+    gfx_set(gfx_c.r, gfx_c.g, gfx_c.b, 0.26*ui.disabled_alpha);
+    gfx_line(floor(spr_x + 0.5), y, floor(spr_x + 0.5), y + h);
+  );
+  
+  ui.sl_x = x + w + ui.margin; ui.sl_y = y;
+  ui.nl_x = x; ui.nl_y = y + h + ui.margin;
+);
+
+function slider_h_thin(id, x, y, w, h, v_min, v_max, v, invert, def_v, target) 
+local(r, rv, t2, mouse_over, lt, lc, ltx, ltw, lty, ltxp)
+(
+  ui.r = 0; ui.rv = 0;
+  gfx_set(gfx_c.r, gfx_c.g, gfx_c.b, gfx_c.a*ui.disabled_alpha);
+  sizzle_line(x, y + invert*h, w, 0, 20);
+  invert == 1 ? (
+    gfx_set(gfx_c.r, gfx_c.g, gfx_c.b, gfx_c.a*ui.disabled_alpha*0.8);
+    ltx = floor(lerp(x, x + w, 0.7) + 0.5); ltw = floor(w*0.3 + 0.5);
+    lty = y + invert*h;
+    sizzle_line(ltx, lty + 6, floor(w*0.3 + 0.5), 0, 20);
+    sizzle_line(ltx, lty, floor(w*0.3 + 0.5), 0, 20);
+    lt = 0; lc = floor(ltw/4);
+    ltx + ltw > y + h ? (
+      pxo = -1;
+    );
+    loop(lc + 1,
+      ltxp = ltx + ltw - 4*lt;
+      sizzle_line(ltxp, lty + 4, 0, 1, 20);
+      lt += 1;
+    );
+    gfx_set(gfx_c.r, gfx_c.g, gfx_c.b, gfx_c.a*ui.disabled_alpha);
+  );
+  t = (v - v_min)/(v_max - v_min);
+  
+  tsx = x + w*t; tsy = y + invert*h;
+  inv_s = invert == 1 ? -1 : 1;
+
+  mouse_over = mx >= x - 20 && mx <= x + w + 10
+  && my >= y + (invert == 0 ? -10 : 0) && my <= y + h + invert*10 && m_lock == 0;
+  mouse_over
+  && mouse_click == 1 
+  && m_lock == 0 
+  && ui.disabled == 0 ? (
+    m_alt == 1 ? (
+      ui.r = 1;
+      ui.rv = def_v;
+    ) : (
+      m_lock = id;
+      t2 = (mx - x)/w;
+      m_ctrl == 0 ? (
+        ui.r = 1;
+        ui.rv = lerp(v_min, v_max, t2);
+        skip = 1;
+        ui.tracker = t2;
+      ) : (
+        ui.tracker = target;
+      );
+    );
+  );
+  m_lock == id ? (
+    ui.r = 1;
+    sensitivity = m_ctrl == 1 ? 0.125 : 1;
+    ui.tracker -= (dx/w)*sensitivity;
+    ui.rv = max(min(ui.tracker, v_max), v_min);
+    mouse_over = 1;
+  );
+
+  gfx_triangle(tsx, tsy, tsx - 10, tsy + 10*inv_s, tsx + 10, tsy + 10*inv_s);
+  mouse_over == 1 ? (
+    gfx_line(tsx - 10, tsy + 13*inv_s, tsx + 10, tsy + 13*inv_s);
+  );
+  gfx_set(gfx_c.r, gfx_c.g, gfx_c.b, 0.16*ui.disabled_alpha);
+  
+  draw_value == 1 ? (
+    gfx_setfont(1, "Verdana", 15, 'i');
+    gfx_measurestr("0.00", strw, strh);
+    gfx_x = x + w/2 - strw/2;
+    gfx_y = y + h/2 - strh/2;
+    gfx_set(gfx_c.r, gfx_c.g, gfx_c.b, gfx_c.a*ui.disabled_alpha);
+    gfx_drawnumber(v, 2);
+  );
+  ui.sl_x = x + w + ui.margin; ui.sl_y = y;
+  ui.nl_x = x; ui.nl_y = y + h + ui.margin;
+);
+
+function slider_h(id, x, y, w, h, v_min, v_max, v, draw_value, def_v, target) 
+local(r, rv, t2)
+(
+  ui.r = 0; ui.rv = 0;
+  gfx_set(gfx_c.r, gfx_c.g, gfx_c.b, gfx_c.a*ui.disabled_alpha);
+  gfx_out_rect(x, y, w, h, 1);
+  t = (v - v_min)/(v_max - v_min);
+  mouse_over =   mx >= x && mx <= x + w 
+  && my >= y && my <= y + h;
+  mouse_over
+  && mouse_click == 1 
+  && m_lock == 0 
+  && ui.disabled == 0 ? (
+    m_alt == 1 ? (
+      ui.r = 1;
+      ui.rv = def_v;
+    ) : (
+      m_lock = id;
+      t2 = (mx - x)/w;
+      m_ctrl == 0 ? (
+        ui.r = 1;
+        ui.rv = lerp(v_min, v_max, t2);
+        skip = 1;
+        ui.tracker = t2;
+      ) : (
+        ui.tracker = target;
+      );
+    );
+  );
+  cm = 1;
+  mouse_over == 1 ? (cm = 1.08);
+  m_lock == id ? (
+    ui.r = 1;
+    sensitivity = m_ctrl == 1 ? 0.125 : 1;
+    ui.tracker -= (dx/w)*sensitivity;
+    ui.rv = max(min(ui.tracker, v_max), v_min);
+    cm = 1.08;
+  );
+  gfx_set(gfx_c.r, gfx_c.g, gfx_c.b, 0.16*ui.disabled_alpha*cm);
+  gfx_rect(x, y, floor(w*t+0.5), h);
+  
+  draw_value == 1 ? (
+    gfx_setfont(1, "Verdana", 15, 'i');
+    gfx_measurestr("0.00", strw, strh);
+    gfx_x = x + w/2 - strw/2;
+    gfx_y = y + h/2 - strh/2;
+    gfx_set(gfx_c.r, gfx_c.g, gfx_c.b, gfx_c.a*ui.disabled_alpha);
+    gfx_drawnumber(v, 2);
+  );
+  ui.sl_x = x + w + ui.margin; ui.sl_y = y;
+  ui.nl_x = x; ui.nl_y = y + h + ui.margin;
+);
+
+function slider_v_thin(id, x, y, w, h, v_min, v_max, v, draw_value, def_v, target) 
+local(r, rv, strw, strh, xc, m_str, num_dc, but_over)
+(
+  ui.r = 0; ui.rv = 0;
+  gfx_set(gfx_c.r, gfx_c.g, gfx_c.b, gfx_c.a*ui.disabled_alpha);
+  t = (v - v_min)/(v_max - v_min);
+  xc = x + w/2;
+  notch_w = 12;
+  but_w = w/1.4 + 1; 
+  but_h = 18 + 1;
+  but_x = xc - but_w/2; 
+  but_y = lerp(y, y + h - but_h, 1-t);
+  
+  but_over = mx >= but_x && mx <= but_x + but_w
+  && my >= but_y && my <= but_y + but_h;
+
+  sizzle_line(xc - notch_w/2, y, notch_w, 0, 20);
+  sizzle_line(xc - notch_w/2, y+h, notch_w, 0, 20);
+  sizzle_line(x + w/2, y, 0, h, 20);
+
+  mouse_over = mx >= x && mx <= x + w 
+  && my >= y && my <= y + h && m_lock == 0;
+  
+  alpha_mul = mouse_over == 1 ? 1.25 : 1;
+  
+  mouse_over
+  && mouse_click == 1 
+  && m_lock == 0
+  && ui.disabled == 0 ? (
+    m_alt == 1 ? (
+      ui.r = 1;
+      ui.rv = def_v;
+    ) : (
+      m_lock = id;
+      t2 = 1 - (my - (y + but_h/2))/(h - but_h);
+      t2 = max(min(t2, v_max), v_min);
+      m_ctrl == 0 ? (
+        ui.tracker = v;
+        but_over == 0 ? (
+          ui.r = 1;
+          ui.rv = lerp(v_min, v_max, t2);
+          skip = 1;
+          ui.tracker = t2;
+        );
+      ) : (
+        ui.tracker = target;
+      );
+    );
+  );
+  m_lock == id ? (
+    ui.r = 1;
+    sensitivity = m_ctrl == 1 ? 0.125 : 1;
+    ui.tracker += (dy/(h - but_h))*sensitivity;
+    ui.rv = max(min(ui.tracker, v_max), v_min);
+    alpha_mul = 1.25;
+  );
+  gfx_set(gfx_c.r, gfx_c.g, gfx_c.b, ui.fill_alpha*1*ui.disabled_alpha*alpha_mul);
+  gfx_rect(xc - notch_w/4, y+(1-t)*h + 1, notch_w/2 + 1, h*t);
+  
+  gfx_set(bg_r, bg_g, bg_b, 1);
+  gfx_rect(but_x, but_y - 2, but_w, but_h + 4, 1);
+  
+  gfx_set(gfx_c.r, gfx_c.g, gfx_c.b, gfx_c.a*ui.disabled_alpha);
+  gfx_out_rect(but_x, but_y, but_w, but_h, 1);
+  
+  draw_value == 1 ? (
+    gfx_setfont(1, "Verdana", 12, 'i');
+    m_str = v*100 >= 10 ? "00.0" : "0.0";
+    gfx_measurestr(m_str, strw, strh);
+    gfx_x = xc - strw/2;
+    gfx_y = but_y - strh/2 + but_h/2;
+    gfx_set(gfx_c.r, gfx_c.g, gfx_c.b, gfx_c.a*ui.disabled_alpha);
+    num_dc = 1-v < 0.001 ? 0 : 1;
+    gfx_drawnumber(v*100, num_dc);
+  );
+  ui.sl_x = x + w + ui.margin; ui.sl_y = y;
+  ui.nl_x = x; ui.nl_y = y + h + ui.margin;
+);

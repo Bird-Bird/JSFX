@@ -1,0 +1,402 @@
+desc:Shifter B1 (BirdBird)
+tags: Frequency Shifter, Delay
+version: 0.5
+author: BirdBird
+changelog: Beta 1 
+provides:
+  dependencies/*
+  Shifter B1 (BirdBird).jsfx.rpl
+about: Frequency shifter that optionally runs in the feedback path of a delay.
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+options:gfx_hz=120
+
+slider1:0<-1,1,0.000010>-Shift Amount
+slider2:0<0,1,0.000010>-Delay Time (ms)
+slider3:0.550<0,1,0.000010>-Feedback
+slider4:1<0,1,0.000010>-Dry/Wet
+slider5:0<0,1,0.000010>-Stereo Spread
+slider6:0<0,1,0.000010>-Break
+slider7:0<0,1,0.000010>-Tempo Sync
+
+import ./dependencies/birdbird_sizzle_gui.jsfx-inc
+import ./dependencies/birdbird_parameters.jsfx-inc
+import ./dependencies/birdbird_buffer.jsfx-inc
+import ./dependencies/birdbird_hilbert.jsfx-inc
+import ./dependencies/birdbird_various.jsfx-inc
+
+@init
+ext_noinit = 1.0;
+hb_l.hilbert();
+hb_r.hilbert();
+
+max_buf_len = 3;
+dl_l.buffer(0, srate*max_buf_len);
+dl_r.buffer(freemem, freemem + srate*max_buf_len);
+delay_max_ms = 500;
+
+hp_l.high_pass(10, 0.9);
+hp_r.high_pass(10, 0.9);
+
+//PARAMETERS
+glide_time = 30;
+shift_p.pr_interp(glide_time, 0, 1);
+delay_time_p.pr_interp(100, 0, 2);
+feedback_p.pr_interp(glide_time, 0, 3);
+wet_p.pr_interp(glide_time, 1, 4);
+lfo_spread_p.pr_interp(glide_time, 0, 5);
+break_p.pr_interp(glide_time, 0, 6);
+tempo_sync_p.pr_interp(100, 0, 7);
+tempo_sync_p.err_threshold = 0.0001;
+spread_crossfade_p.pr_interp(10, 0, -1);
+delay_crossfade_p.pr_interp(30, 0, -1);
+
+//PARAMETER MAPPING
+map_bw = log(10000/5)/log(2);
+function map_shift(p) local(t, bp_1)
+(
+  bp_1 = 0.25;
+  t = abs(p);
+  t <= bp_1 ? (
+    t = map_range(t, 0, bp_1, 0, 1);
+    t = lerp(0, 5, t);
+    t*sign(p);
+  ) : (
+    t = map_range(t, bp_1, 1, 0, 1);
+    5*2^(map_bw*t)*sign(p);   
+  );
+);
+
+spread_bw = log(300/5)/log(2);
+function map_spread(t) local(t, bp_1)
+(
+  bp_1 = 0.4;
+  t <= bp_1 ? (
+    t = map_range(t, 0, bp_1, 0, 1);
+    t = lerp(0, 5, t);
+    t;
+  ) : (
+    t = map_range(t, bp_1, 1, 0, 1);
+    5*2^(spread_bw*t);   
+  );
+);
+
+function map_delay(t, max_delay) local(delay_low, delay_bw)
+(
+  bp_1 = 1/6;
+  delay_low = max_delay/(2^5);
+  delay_bw = log(max_delay/delay_low)/log(2);
+  t <= bp_1 ? (
+    t = map_range(t, 0, bp_1, 0, 1);
+    t = lerp(0, delay_low, t);
+    t;
+  ) : (
+    t = map_range(t, bp_1, 1, 0, 1);
+    delay_low*2^(delay_bw*t);   
+  ); 
+);
+
+//CROSSFADE
+function crossfade_f(t) 
+(
+  t = lerp(-1, 1, t);
+  sqrt(0.5*(1-t));
+);
+function crossfade_b(t) 
+(
+  t = lerp(-1, 1, t);
+  sqrt(0.5*(1+t));
+);
+
+@slider
+shift_p.pr_slider_change();
+delay_time_p.pr_slider_change();
+feedback_p.pr_slider_change();
+wet_p.pr_slider_change();
+lfo_spread_p.pr_slider_change();
+break_p.pr_slider_change();
+tempo_sync_p.pr_slider_change();
+delay_time_p.target == 0 ? (
+  delay_crossfade_p.pr_set(1);
+) : (
+  delay_crossfade_p.pr_set(0);
+);
+lfo_spread_p.target == 0 ? (
+  spread_crossfade_p.pr_set(1);
+) : (
+  spread_crossfade_p.pr_set(0);
+);
+
+@sample
+//PARAMETERS
+shift_p.pr_update();
+delay_time_p.pr_update();
+feedback_p.pr_update();
+wet_p.pr_update();
+lfo_spread_p.pr_update();
+break_p.pr_update();
+tempo_sync_p.pr_update();
+spread_crossfade_p.pr_update();
+delay_crossfade_p.pr_update();
+
+shift = map_shift(shift_p.pr_get());
+feedback = feedback_p.pr_get();
+wet = wet_p.pr_get();
+lfo_spread = map_spread(lfo_spread_p.pr_get());
+break = break_p.pr_get();
+tempo_sync = tempo_sync_p.pr_get();
+spread_crossfade = spread_crossfade_p.pr_get();
+delay_crossfade = delay_crossfade_p.pr_get();
+
+shift_p.pr_needs_update() == 1 ? (
+  shift < 0 ? (
+    hp_l.high_pass(shift*-1 + lfo_spread, 1);
+    hp_r.high_pass(shift*-1 + lfo_spread, 1);
+  ) : (
+    hp_l.high_pass(10, 1);
+    hp_r.high_pass(10, 1);
+  );  
+);
+break.pr_needs_update() == 1 ? (
+  hb_l.hilbert_break(break);
+  hb_r.hilbert_break(break);  
+);
+tempo_sync_p.pr_needs_update() == 0 ? (
+  tempo_sync_p.pr_force_set(floor(tempo_sync + 0.5));
+);
+
+delay_tempo = (120/tempo)*1000;
+delay_tempo = min(delay_tempo, max_buf_len*1000);
+delay_time = map_delay(delay_time_p.pr_get(), 500);
+delay_time_tempo = map_delay(delay_time_p.pr_get(), delay_tempo);
+true_delay_time = lerp(delay_time, delay_time_tempo, tempo_sync);
+
+
+//DELAY
+dl = dl_l.bf_read(true_delay_time*srate*0.001 + 1);
+dr = dl_r.bf_read(true_delay_time*srate*0.001 + 1);
+dl = lerp(dl, spl0, delay_crossfade);
+dr = lerp(dr, spl1, delay_crossfade);
+
+fs_in_l = dl;
+fs_in_r = dr;
+
+//FREQUENCY SHIFTER
+lfo_phase_l += ((2*$pi)/srate)*(shift - lfo_spread);
+lfo_phase_r += ((2*$pi)/srate)*(shift + lfo_spread);
+rm_s_l = sin(lfo_phase_l);
+rm_c_l = cos(lfo_phase_l);
+rm_s_r = sin(lfo_phase_r);
+rm_c_r = cos(lfo_phase_r);
+
+rm_s_r = lerp(rm_s_l, rm_s_r, 1 - spread_crossfade);
+rm_c_r = lerp(rm_c_l, rm_c_r, 1 - spread_crossfade);
+
+hb_l.hilbert_process(hp_l.high_pass_tick(fs_in_l));
+re_l = re; im_l = im;
+hb_r.hilbert_process(hp_r.high_pass_tick(fs_in_r));
+re_r = re; im_r = im;
+
+out_l = rm_s_l * re_l - rm_c_l*im_l;
+out_r = rm_s_r * re_r - rm_c_r*im_r;
+
+//DELAY
+true_feedback = lerp(feedback, feedback/1.3, break);
+dl_l.bf_write(spl0 + out_l*true_feedback);
+dl_r.bf_write(spl1 + out_r*true_feedback);
+
+spl0 = spl0*crossfade_f(wet) + out_l*crossfade_b(wet);
+spl1 = spl1*crossfade_f(wet) + out_r*crossfade_b(wet);
+
+@gfx 694 357
+ui.margin = 10;
+ui.fill_alpha = 0.16;
+ui.separator_alpha = 0.2;
+ui.disabled_a = 0.3;
+ui.disabled_alpha = 1;
+ui.supress_noise = 1;
+
+bg_r = 1; bg_g = 0.95; bg_b = 1;
+cr = 0.3; cg = 0; cb = 0.2;
+
+gfx_set(bg_r, bg_g, bg_b, 1);
+gfx_rect(0, 0, gfx_w, gfx_h);
+sizzle_update();
+
+side_sl_w = 50;
+sx = 60 + side_sl_w; sy = 60;
+sly_o = 0;
+v_spacing = 50;
+gly = 6;
+sny = 0;
+
+m_w = gfx_w - 2*sx;
+br_h = gfx_h - 2*(sy-sly_o) - ui.margin - 18;
+section_size = (gfx_h - gap - 2*sy)/2 - 14;
+gfx_col(cr,cg,cb,1);
+ui.sl_x = sx; ui.sl_y = sy;
+
+//SHIFT
+shift_x = ui.sl_x; shift_y = ui.sl_y;
+spread_gui = lfo_spread_p.pr_get()*20;
+shift_e_y = ui.sl_y + section_size;
+slider_h_shift(2, ui.sl_x, ui.sl_y + gly, m_w, section_size, -1, 1, shift_p.pr_get(), spread_gui, 0); //P - shift
+ui.r == 1 ? (
+  shift_p.pr_set(ui.rv);
+);
+break_x = ui.sl_x; break_y = ui.sl_y;
+
+label_size = 34;
+label_nudge_y = 3;
+gfx_x = shift_x; gfx_y = shift_y - label_size - label_nudge_y + gly;
+sizzle_label("SHIFT", label_size, 0);
+
+//READOUT
+hz_h = 18;
+lsx = shift_x + m_w/2; lsy = shift_y - hz_h - 1;
+gfx_x = lsx; gfx_y = lsy + gly;
+hz_str = 1;
+hz_val = floor(map_shift(shift_p.pr_get())+0.5);
+sprintf(hz_str,"%{hz_val}dhz");
+sizzle_label(hz_str, hz_h, 1);
+
+//SPREAD
+spr_sl_y = shift_y + section_size + 10;
+slider_h_thin(3, lsx, spr_sl_y + gly, m_w/2, 30, 0, 1, lfo_spread_p.pr_get(), 0, 0, lfo_spread_p.target); //P - lfo_spread
+ui.r == 1 ? (
+  lfo_spread_p.pr_set(ui.rv);
+  ui.rv == 0 ? (
+    spread_crossfade_p.pr_set(1);
+  ) : (
+    spread_crossfade_p.pr_set(0);
+  );
+);
+gfx_x = lsx; gfx_y = spr_sl_y + 12 + gly;
+sizzle_label("Spread", 18, 1);
+
+//DELAY
+dl_gui_y = spr_sl_y + 12 + 18 + v_spacing;
+dl_sl_y = ui.sl_y;
+slider_h(5,  sx, dl_gui_y + gly, m_w, section_size, 0, 1, delay_time_p.pr_get(), 0, 0, delay_time_p.target); //P delay_time
+ui.r == 1 ? (
+  delay_time_p.pr_set(ui.rv);
+  ui.rv == 0 ? (
+    delay_crossfade_p.pr_set(1);
+  ) : (
+    delay_crossfade_p.pr_set(0);
+  );
+);
+gap = dl_gui_y - shift_e_y;
+
+gfx_x = ui.nl_x; gfx_y = ui.sl_y - label_size - label_nudge_y;
+sizzle_label("DELAY", label_size, 0);
+dl_sl_x = ui.nl_x; dl_sl_y = ui.nl_y - ui.margin;
+
+//FEEDBACK
+fb_r = 0.69;
+fb_s_x = ui.nl_x + m_w*fb_r; fb_s_y = ui.sl_y - 10 - 30;
+slider_h_thin(6, fb_s_x, fb_s_y, m_w*(1-fb_r), 30, 0, 1, feedback_p.pr_get(), 1, 0, feedback_p.target); //P - lfo_spread
+ui.r == 1 ? (
+  feedback_p.pr_set(ui.rv);
+);
+gfx_x = fb_s_x; gfx_y = fb_s_y;
+sizzle_label("Feedback", 18, 1);
+
+//TEMPO SYNC
+sync_x = dl_sl_x; sync_y = ma_s_y + 25;
+sizzle_checkbox(7, dl_sl_x, sync_y, 15, tempo_sync_p.target, "Tempo Sync");
+ui.r == 1 ? (
+  tempo_sync_p.pr_set(ui.rv);
+);
+max_y = ui.nl_y - ui.margin;
+
+//MARKERS
+ma_xs = dl_sl_x;
+ma_s_y = dl_sl_y;
+ma_t = 0; ma_i = 0;
+gfx_set(0,0,0,1);
+loop(7, 
+  ma_xp = lerp(ma_xs, ma_xs + m_w + 1, ma_t);
+  ma_xp = min(ma_xp, ma_xs + m_w);
+  sizzle_line(ma_xp, ma_s_y, 0, 4, 5);
+  gfx_x = ma_xp; gfx_y = ma_s_y + 5;
+  center = ma_t > 0; center = ma_t == 1 ? 2 : center;
+  label = "";
+  label_str = 2;
+  tempo_sync_p.target == 1 ? (
+    ma_i == 0 ? (
+      label = "Off";
+    ):(ma_i == 1) ? (
+      label = "1/64";
+    ):(ma_i == 2) ? (
+      label = "1/32";  
+    ):(ma_i == 3) ? (
+      label = "1/16";
+    ):(ma_i == 4) ? (
+      label = "1/8";  
+    ):(ma_i == 5) ? (
+      label = "1/4";  
+    ):(ma_i == 6) ? (
+      label = "1/2";  
+    );
+    gfx_measurestr(label, lb_str_w, _);
+    sizzle_label(label, 15, center);
+  ) : (
+    ma_i == 0 ? (
+      label_str = "Off";
+    ):(ma_i == 1) ? (
+      dv = delay_max_ms/2^5;
+    ):(ma_i == 2) ? (
+      dv = delay_max_ms/2^4;
+    ):(ma_i == 3) ? (
+      dv = delay_max_ms/2^3;
+    ):(ma_i == 4) ? (
+      dv = delay_max_ms/2^2;
+    ):(ma_i == 5) ? (
+      dv = delay_max_ms/2^1;
+    ):(ma_i == 6) ? (
+      dv = delay_max_ms/2^0;  
+    );
+    sprintf(label_str,"%{dv}dms");
+    gfx_measurestr(label_str, lb_str_w, _);
+    sizzle_label(label_str, 15, center);
+  );
+  mx >= gfx_x - lb_str_w/2 - 20 && mx <= gfx_x - lb_str_w/2 + 20
+  && my >= gfx_y && my <= gfx_y + 20 && m_lock == 0 ? (
+    lb_wh = lb_str_w/2;
+    lb_xo_d = ma_i == 0 ? lb_wh : 0;
+    lb_xo_d = ma_i == 6 ? -lb_wh : lb_xo_d;
+    gfx_line(ma_xp - lb_wh + lb_xo_d, ma_s_y + 19, ma_xp + lb_wh + lb_xo_d, ma_s_y + 19);
+    mouse_click == 1 ? (
+      delay_time_p.pr_set(ma_t);
+      ma_t == 0 ? (
+        delay_crossfade_p.pr_set(1);
+      ) : (
+        delay_crossfade_p.pr_set(0);
+      );
+    );
+  );
+  ma_t += 1/6; ma_i += 1;
+);
+
+//BREAK
+br_x_r = break_x + 16 + 4;
+slider_v_thin(8, br_x_r, break_y - sly_o, side_sl_w, br_h + sny, 0, 1, break_p.pr_get(), 1, 0, break_p.target); //P - break
+ui.r == 1 ? (
+  break_p.pr_set(ui.rv);
+);
+gfx_x = ui.nl_x + 25; gfx_y = ui.nl_y;
+sizzle_label("Break", 18, 1);
+
+slider_v_thin(9, sx - side_sl_w - 29, break_y - sly_o, side_sl_w, br_h + sny, 0, 1, wet_p.pr_get(), 1, 1, wet_p.target); //P - break
+ui.r == 1 ? (
+  wet_p.pr_set(ui.rv);
+);
+gfx_x = ui.nl_x + 25; gfx_y = ui.nl_y;
+sizzle_label("Wet", 18, 1);
+
+
+
