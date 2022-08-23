@@ -1,5 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="BirdBird JSFX" commit="b07156f32a27ec9425c237f8860a45e08b14ea56">
+<index version="1" name="BirdBird JSFX" commit="2d13161fd6b5110b124e3341b56ef61f4b9534fd">
+  <category name="Shifter">
+    <reapack name="Shifter B1 (BirdBird).jsfx" type="effect" desc="Shifter B1 (BirdBird)">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 Frequency shifter that optionally runs in the feedback path of a delay.\par}
+}
+]]></description>
+      </metadata>
+      <version name="0.5" author="BirdBird" time="2022-08-23T21:49:56Z">
+        <changelog><![CDATA[Beta 1]]></changelog>
+        <source>https://github.com/Bird-Bird/JSFX/raw/2d13161fd6b5110b124e3341b56ef61f4b9534fd/Shifter/Shifter%20B1%20(BirdBird).jsfx</source>
+        <source file="dependencies/birdbird_buffer.jsfx">https://github.com/Bird-Bird/JSFX/raw/2d13161fd6b5110b124e3341b56ef61f4b9534fd/Shifter/dependencies/birdbird_buffer.jsfx</source>
+        <source file="dependencies/birdbird_hilbert.jsfx-inc">https://github.com/Bird-Bird/JSFX/raw/2d13161fd6b5110b124e3341b56ef61f4b9534fd/Shifter/dependencies/birdbird_hilbert.jsfx-inc</source>
+        <source file="dependencies/birdbird_parameters.jsfx-inc">https://github.com/Bird-Bird/JSFX/raw/2d13161fd6b5110b124e3341b56ef61f4b9534fd/Shifter/dependencies/birdbird_parameters.jsfx-inc</source>
+        <source file="dependencies/birdbird_sizzle_gui.jsfx-inc">https://github.com/Bird-Bird/JSFX/raw/2d13161fd6b5110b124e3341b56ef61f4b9534fd/Shifter/dependencies/birdbird_sizzle_gui.jsfx-inc</source>
+        <source file="dependencies/birdbird_various.jsfx-inc">https://github.com/Bird-Bird/JSFX/raw/2d13161fd6b5110b124e3341b56ef61f4b9534fd/Shifter/dependencies/birdbird_various.jsfx-inc</source>
+        <source file="Shifter B1 (BirdBird).jsfx.rpl">https://github.com/Bird-Bird/JSFX/raw/2d13161fd6b5110b124e3341b56ef61f4b9534fd/Shifter/Shifter%20B1%20(BirdBird).jsfx.rpl</source>
+      </version>
+    </reapack>
+  </category>
   <category name="Sonic Tape">
     <reapack name="Sonic Tape B1 (BirdBird).jsfx" type="effect" desc="Sonic Tape B1 (BirdBird)">
       <metadata>
