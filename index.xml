@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="BirdBird JSFX" commit="2d13161fd6b5110b124e3341b56ef61f4b9534fd">
+<index version="1" name="BirdBird JSFX" commit="eeddc4c49fae795ecdf8584b94a68cc2bc38585b">
   <category name="Shifter">
     <reapack name="Shifter B1 (BirdBird).jsfx" type="effect" desc="Shifter B1 (BirdBird)">
       <metadata>
@@ -68,6 +68,13 @@
         <source file="dependencies/SVF.jsfx-inc">https://github.com/Bird-Bird/JSFX/raw/b2528f17c8a3e194e506cc1b7bfe50cb5cae16d6/Stereo%20Zapper/dependencies/SVF.jsfx-inc</source>
         <source file="dependencies/birdbird_parameters.jsfx-inc">https://github.com/Bird-Bird/JSFX/raw/b2528f17c8a3e194e506cc1b7bfe50cb5cae16d6/Stereo%20Zapper/dependencies/birdbird_parameters.jsfx-inc</source>
         <source file="dependencies/birdbird_sizzle_gui.jsfx-inc">https://github.com/Bird-Bird/JSFX/raw/b2528f17c8a3e194e506cc1b7bfe50cb5cae16d6/Stereo%20Zapper/dependencies/birdbird_sizzle_gui.jsfx-inc</source>
+      </version>
+      <version name="0.5.2" author="BirdBird" time="2022-08-24T00:48:59Z">
+        <changelog><![CDATA[Various bug fixes]]></changelog>
+        <source>https://github.com/Bird-Bird/JSFX/raw/eeddc4c49fae795ecdf8584b94a68cc2bc38585b/Stereo%20Zapper/Stereo%20Zapper.jsfx</source>
+        <source file="dependencies/SVF.jsfx-inc">https://github.com/Bird-Bird/JSFX/raw/eeddc4c49fae795ecdf8584b94a68cc2bc38585b/Stereo%20Zapper/dependencies/SVF.jsfx-inc</source>
+        <source file="dependencies/birdbird_parameters.jsfx-inc">https://github.com/Bird-Bird/JSFX/raw/eeddc4c49fae795ecdf8584b94a68cc2bc38585b/Stereo%20Zapper/dependencies/birdbird_parameters.jsfx-inc</source>
+        <source file="dependencies/birdbird_sizzle_gui.jsfx-inc">https://github.com/Bird-Bird/JSFX/raw/eeddc4c49fae795ecdf8584b94a68cc2bc38585b/Stereo%20Zapper/dependencies/birdbird_sizzle_gui.jsfx-inc</source>
       </version>
     </reapack>
   </category>
