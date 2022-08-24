@@ -1,8 +1,8 @@
 desc:Stereo Zapper (BirdBird)
 tags: distortion, bitcrusher
-version: 0.5.1
+version: 0.5.2
 author: BirdBird
-changelog: Alpha Version
+changelog: Various bug fixes
 provides:
   dependencies/*
 about: Effect that crushes the signal by scrambling the left and right stereo channels in series. 
@@ -14,9 +14,9 @@ in_pin:right input
 out_pin:left output
 out_pin:right output
 
-import birdbird_sizzle_gui.jsfx-inc
-import birdbird_parameters.jsfx-inc
-import SVF.jsfx-inc
+import ./dependencies/birdbird_sizzle_gui.jsfx-inc
+import ./dependencies/birdbird_parameters.jsfx-inc
+import ./dependencies/SVF.jsfx-inc
 
 slider1:1<0,1,0.00001>-Mix
 slider2:<0,1,0.00001>-Pre Filter

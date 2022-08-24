@@ -16,7 +16,7 @@ function pr_set(val) instance(target, slider_id)
   target = val;
   slider_id > 0 ? (
     slider(slider_id) = val;
-    slider_automate(slider_id);
+    slider_automate(slider(slider_id));
     sliderchange(slider_id);
   );
 );
