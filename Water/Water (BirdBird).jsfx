@@ -1,6 +1,6 @@
 desc:Water (BirdBird)
 tags: Modulation, Chorus
-version: 0.5.2
+version: 0.5.3
 author: BirdBird
 changelog: Beta 1 
 provides:
@@ -166,9 +166,8 @@ hp_cutoff_p.pr_needs_update() == 1 ? (
 
 //FILTER
 sin_lfo = global_lfo.sin_lfo_tick(lfo_speed);
-filter_e = filter_env.envelope_get();
-filter_cutoff_l = cutoff + filter_env_amount*filter_e + sin_lfo*lfo_depth + filter_spread;
-filter_cutoff_r = cutoff + filter_env_amount*filter_e + sin_lfo*lfo_depth - filter_spread;
+filter_cutoff_l = cutoff + sin_lfo*lfo_depth + filter_spread;
+filter_cutoff_r = cutoff + sin_lfo*lfo_depth - filter_spread;
 filter_cutoff_l = max(min(filter_cutoff_l, 0.93), 0.1);
 filter_cutoff_r = max(min(filter_cutoff_r, 0.93), 0.1);
 lp_l.init_moog2(filter_cutoff_l, resonance);
