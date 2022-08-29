@@ -1,6 +1,6 @@
 desc:Water (BirdBird)
 tags: Modulation, Chorus
-version: 0.5
+version: 0.5.1
 author: BirdBird
 changelog: Beta 1 
 provides:
@@ -25,7 +25,6 @@ import ./dependencies/birdbird_buffer.jsfx-inc
 import ./dependencies/saike_filters.jsfx-inc
 import ./dependencies/sault_elliptic_lp.jsfx-inc
 import ./dependencies/birdbird_various.jsfx-inc
-import ./dependencies/birdbird_envelope.jsfx-inc
 import ./dependencies/birdbird_sizzle_gui.jsfx-inc
 
 in_pin:left input
