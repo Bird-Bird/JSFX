@@ -1,6 +1,6 @@
 desc:Water (BirdBird)
 tags: Modulation, Chorus
-version: 0.5.1
+version: 0.5.2
 author: BirdBird
 changelog: Beta 1 
 provides:
@@ -55,7 +55,6 @@ hp_crossfade_p.pr_interp(20, 0, -1);
 
 //FILTER
 oversampling = 4;
-filter_env.envelope(100, 100, 0.5, 100);
 lp_l.init_moog2(200, 0.2);
 lp_r.init_moog2(200, 0.2);
 
