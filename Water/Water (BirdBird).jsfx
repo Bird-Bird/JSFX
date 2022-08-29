@@ -1,0 +1,513 @@
+desc:Water (BirdBird)
+tags: Modulation, Chorus
+version: 0.5
+author: BirdBird
+changelog: Beta 1 
+provides:
+  dependencies/*
+about: Chorus plugin inspired by an analog synthesizer.
+
+slider2:0<0,1,0.000010>-Pitch Drift
+slider3:0.91357<0,1,0.000010>-Filter Cutoff
+slider4:0.1<0,1,0.000010>-Filter Resonance
+slider5:0<0,1,0.000010>-High-Pass Cutoff
+slider6:2<0,3,1>-Chorus Type
+slider7:0.5<0,1,0.000010>-Chorus Wet
+slider8:0<0,1,0.000010>-LFO Speed (Hz)
+slider9:0<0,1,0.000010>-LFO Depth (oct)
+slider10:0<0,1,0.000010>-Rate Multiplier
+slider11:0<0,1,0.000010>-Chorus Drive
+slider12:0<-1,1,0.000010>-Filter Spread
+slider13:0<-1,1,0.000010>-Width
+
+import ./dependencies/birdbird_parameters.jsfx-inc
+import ./dependencies/birdbird_buffer.jsfx-inc
+import ./dependencies/saike_filters.jsfx-inc
+import ./dependencies/sault_elliptic_lp.jsfx-inc
+import ./dependencies/birdbird_various.jsfx-inc
+import ./dependencies/birdbird_envelope.jsfx-inc
+import ./dependencies/birdbird_sizzle_gui.jsfx-inc
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+options:gfx_hz=120
+
+@init
+glide_time = 20;
+
+//PARAMETERS
+cutoff_p.pr_interp(glide_time, slider3, 3);
+resonance_p.pr_interp(glide_time, slider4, 4);
+hp_cutoff_p.pr_interp(glide_time, slider5, 5);
+chorus_type_p.pr_interp(100, slider6, 6);
+chorus_crossfade_p.pr_interp(40, 0, -1);
+chorus_wet_p.pr_interp(glide_time, slider7, 7);
+lfo_speed_p.pr_interp(glide_time, slider8, 8);
+lfo_depth_p.pr_interp(glide_time, slider9, 9);
+rate_mult_p.pr_interp(glide_time, slider10, 10);
+drive_p.pr_interp(glide_time, slider11, 11);
+filter_spread_p.pr_interp(glide_time, slider12, 12);
+width_p.pr_interp(glide_time, slider13, 13);
+hp_crossfade_p.pr_interp(20, 0, -1);
+
+
+//FILTER
+oversampling = 4;
+filter_env.envelope(100, 100, 0.5, 100);
+lp_l.init_moog2(200, 0.2);
+lp_r.init_moog2(200, 0.2);
+
+//OVERSAMPLING
+elliptic_lp_fc = 20000/srate * 2;
+upsampler_l.ellipticLP_set(elliptic_lp_fc);
+downsampler_l.ellipticLP_set(elliptic_lp_fc);
+upsampler_r.ellipticLP_set(elliptic_lp_fc);
+downsampler_r.ellipticLP_set(elliptic_lp_fc);
+
+//CHORUS
+ch_1_min = 0.00166*srate;
+ch_1_max = 0.00535*srate;
+ch_1_rate = 0.513;
+ch_2_min = 0.00166*srate;
+ch_2_max = 0.00535*srate;
+ch_2_rate = 0.863;
+ch_3_min = 0.0033*srate;
+ch_3_max = 0.0037*srate;
+ch_3_rate = 7.75;
+chorus_lfo.tri_lfo(ch_3_rate);
+chorus_dl_l.buffer(freemem, freemem + srate);
+chorus_dl_r.buffer(freemem, freemem + srate);
+
+//FILTER MOD
+global_lfo.sin_lfo();
+
+//WET HP
+wet_hp_l.high_pass(20, 1);
+wet_hp_r.high_pass(20, 1);
+
+
+//PARAMETER MAPPING
+function map_width(t2)
+local(t, t2)
+(
+  t = t2;
+  t >= 0 ? (
+    db2val(lerp(0, 8, t));
+  ) : t < 0 ? (
+    t = map_range(t, -1, 0, 0, 1);
+    t < 0.1 ? (
+      t = map_range(t, 0, 0.1, 0, 1);
+      lerp(0, db2val(-48), t);
+    ) : (
+      t = map_range(t, 0.1, 1, 0, 1);
+      db2val(lerp(-48, 0, t));
+    );
+  );
+);
+
+wet_hp_bw = log(10000/10)/log(2);
+function map_wet_hp(t)
+(
+  10*2^(wet_hp_bw*t);
+);
+
+function map_rate(t)
+(
+  lerp(0.5, 5, t);
+);
+
+@slider
+cutoff_p.pr_slider_change();
+resonance_p.pr_slider_change();
+hp_cutoff_p.pr_slider_change();
+chorus_type_p.pr_slider_change();
+chorus_wet_p.pr_slider_change();
+lfo_speed_p.pr_slider_change();
+lfo_depth_p.pr_slider_change();
+rate_mult_p.pr_slider_change();
+drive_p.pr_slider_change();
+filter_spread_p.pr_slider_change();
+width_p.pr_slider_change();
+
+@sample
+cutoff_p.pr_update();
+resonance_p.pr_update();
+hp_cutoff_p.pr_update();
+chorus_type_p.pr_update();
+chorus_crossfade_p.pr_update();
+chorus_wet_p.pr_update();
+lfo_speed_p.pr_update();
+lfo_depth_p.pr_update();
+rate_mult_p.pr_update();
+drive_p.pr_update();
+filter_spread_p.pr_update();
+width_p.pr_update();
+hp_crossfade_p.pr_update();
+
+lfo_speed = lerp(0.1, 10, lfo_speed_p.pr_get());
+lfo_depth = lerp(0, 0.1, lfo_depth_p.pr_get());
+rate_mult = map_rate(rate_mult_p.pr_get());
+drive = lerp(1, 10, drive_p.pr_get());
+filter_spread = filter_spread_p.pr_get()*0.4;
+width = map_width(width_p.pr_get());
+hp_crossfade = hp_crossfade_p.pr_get();
+
+cutoff = cutoff_p.pr_get();
+resonance = lerp(0.1, 5, resonance_p.pr_get());
+
+hp_cutoff = map_wet_hp(hp_cutoff_p.pr_get());
+hp_cutoff_p.pr_needs_update() == 1 ? (
+  wet_hp_l.high_pass(hp_cutoff, 0.95);
+  wet_hp_r.high_pass(hp_cutoff, 0.95);
+);
+
+
+
+//FILTER
+sin_lfo = global_lfo.sin_lfo_tick(lfo_speed);
+filter_e = filter_env.envelope_get();
+filter_cutoff_l = cutoff + filter_env_amount*filter_e + sin_lfo*lfo_depth + filter_spread;
+filter_cutoff_r = cutoff + filter_env_amount*filter_e + sin_lfo*lfo_depth - filter_spread;
+filter_cutoff_l = max(min(filter_cutoff_l, 0.93), 0.1);
+filter_cutoff_r = max(min(filter_cutoff_r, 0.93), 0.1);
+lp_l.init_moog2(filter_cutoff_l, resonance);
+lp_r.init_moog2(filter_cutoff_r, resonance);
+filter_bandwidth = log(22050/20)/log(2);
+
+
+dry_in_l = spl0;
+dry_in_r = spl1;
+
+
+//4x OVERSAMPLE
+os_l_in = dry_in_l*4*drive;
+os_l_1 = upsampler_l.ellipticLP(os_l_in);
+os_l_2 = upsampler_l.ellipticLP(0);
+os_l_3 = upsampler_l.ellipticLP(0);
+os_l_4 = upsampler_l.ellipticLP(0);
+
+//FILTER - Saike's Ladder Filter
+os_l_1 = lp_l.mix_moog2(os_l_1, 0, 0);
+os_l_2 = lp_l.mix_moog2(os_l_2, 0, 0);
+os_l_3 = lp_l.mix_moog2(os_l_3, 0, 0);
+os_l_4 = lp_l.mix_moog2(os_l_4, 0, 0);
+
+os_l_1 = downsampler_l.ellipticLP(os_l_1);
+os_l_2 = downsampler_l.ellipticLP(os_l_2);
+os_l_3 = downsampler_l.ellipticLP(os_l_3);
+os_l_4 = downsampler_l.ellipticLP(os_l_4);
+os_l_out = os_l_1/drive;
+
+
+os_r_in = dry_in_r*4*drive;
+os_r_1 = upsampler_r.ellipticLP(os_r_in);
+os_r_2 = upsampler_r.ellipticLP(0);
+os_r_3 = upsampler_r.ellipticLP(0);
+os_r_4 = upsampler_r.ellipticLP(0);
+
+//FILTER - Saike's Ladder Filter
+os_r_1 = lp_r.mix_moog2(os_r_1, 0, 0);
+os_r_2 = lp_r.mix_moog2(os_r_2, 0, 0);
+os_r_3 = lp_r.mix_moog2(os_r_3, 0, 0);
+os_r_4 = lp_r.mix_moog2(os_r_4, 0, 0);
+
+os_r_1 = downsampler_r.ellipticLP(os_r_1);
+os_r_2 = downsampler_r.ellipticLP(os_r_2);
+os_r_3 = downsampler_r.ellipticLP(os_r_3);
+os_r_4 = downsampler_r.ellipticLP(os_r_4);
+os_r_out = os_r_1/drive;
+
+
+
+//CHORUS
+chorus_type_p.pr_update();
+chorus_crossfade_p.pr_update();
+chorus_wet_p.pr_update();
+chorus_type = chorus_type_p.pr_get();
+chorus_crossfade = chorus_crossfade_p.pr_get();
+chorus_wet = chorus_wet_p.pr_get();
+
+chorus_type_p.target == 0 && chorus_crossfade_p.target != 0 ? (
+  chorus_crossfade_p.pr_set(0);
+) : chorus_type_p.target > 0 && chorus_crossfade_p.target != 1 ? (
+  chorus_crossfade_p.pr_set(1);
+);
+ch_in_l = os_l_out;
+ch_in_r = os_r_out;
+ch_min = 0; ch_max = 0; ch_rate = 0;
+chorus_type <= 1 ? (
+  ch_min = ch_1_min;
+  ch_max = ch_1_max;
+  ch_rate = ch_1_rate;
+) : chorus_type <= 2 ? (
+  ch_min = lerp(ch_1_min, ch_2_min, chorus_type - 1);
+  ch_max = lerp(ch_1_max, ch_2_max, chorus_type - 1);
+  ch_rate = lerp(ch_1_rate, ch_2_rate, chorus_type - 1);
+) : chorus_type <= 3 ? (
+  ch_min = lerp(ch_2_min, ch_3_min, chorus_type - 2);
+  ch_max = lerp(ch_2_max, ch_3_max, chorus_type - 2);
+  ch_rate = lerp(ch_2_rate, ch_3_rate, chorus_type - 2);
+);
+ch_rate *= rate_mult;
+
+chorus_lfo.tri_lfo_tick(ch_rate);
+ch_lfo = chorus_lfo.tri_lfo_get();
+
+ch_l = chorus_dl_l.bf_read(lerp(ch_min, ch_max, ch_lfo));
+chorus_dl_l.bf_write(ch_in_l);
+ch_r = chorus_dl_r.bf_read(lerp(ch_min, ch_max, 1 - ch_lfo));
+chorus_dl_r.bf_write(ch_in_r);
+
+//HP
+hp_crossfade_p.target == 1 && hp_cutoff_p.target == 0 ? 
+(
+  hp_crossfade_p.pr_set(0);
+) : hp_crossfade_p.target == 0 && hp_cutoff_p.target > 0 ? (
+  hp_crossfade_p.pr_set(1);
+);
+ch_l_hp = wet_hp_l.tick(ch_l);
+ch_r_hp = wet_hp_r.tick(ch_r);
+ch_l = lerp(ch_l, ch_l_hp, hp_crossfade);
+ch_r = lerp(ch_r, ch_r_hp, hp_crossfade);
+
+
+//M-S ENCODER
+ch_mid = (ch_l + ch_r)/2;
+ch_side = (ch_l - ch_r)/2*width;
+
+//M-S DECODER
+ch_l = ch_mid + ch_side;
+ch_r = ch_mid - ch_side;
+
+//OUT
+ch_v = chorus_crossfade*chorus_wet;
+spl0 = (dry_in_l*crossfade_f(ch_v) + ch_l*crossfade_b(ch_v));
+spl1 = (dry_in_r*crossfade_f(ch_v) + ch_r*crossfade_b(ch_v));
+
+
+@gfx 855 394
+sizzle_init();
+
+bg_r = 0.1; bg_g = 0.1; bg_b = 0.1;
+cr = 0.3; cg = 0; cb = 0.2;
+yl_r = 255/255; yl_g = 191/255; yl_b = 0;
+rr = 240/255; rg = 70/255; rb = 79/255;
+
+gfx_set(bg_r, bg_g, bg_b, 1);
+gfx_rect(0, 0, gfx_w, gfx_h);
+sizzle_update();
+
+but_size = 138; //113
+sl_h = 46; //53
+wet_h = but_size + sl_h*2 + ui.margin*2;
+v_sl_w = 56;
+lb_sm_s = 18;
+ui.margin = 10;
+but_margin_x = -12;
+filter_w = but_size*2 + ui.margin - but_margin_x;
+
+xs = 25;
+ys = 20;
+lb_x_o = 0; lb_h = 50;
+total_w = but_size*4 + 3*ui.margin + 6 + v_sl_w*2 + ui.margin + ui.margin + v_sl_w;
+total_w = filter_w*2 + v_sl_w*3 + ui.margin*4;
+lb_xp = xs + lb_x_o; lb_w = total_w - lb_x_o;
+gfx_set(rr, rg, rb, 1);
+gfx_line(lb_xp + 29, ys + lb_h/2, lb_xp + total_w - 29, ys + lb_h/2);
+gfx_set(bg_r, bg_g, bg_b, 1);
+gfx_rect(floor(lb_xp + total_w/2 + 0.5 - ui.strw/2) - 10, ys + lb_h/2, ui.strw + 20, ui.strh);
+gfx_col(rr, rg, rb, 1);
+sizzle_label_rect(lb_xp, ys, total_w - 19, lb_h, "WATER", 35, 1, 10, 0);
+
+//RATE
+rate_x = xs; rate_y = ys + lb_h + ui.margin;
+gfx_col(yl_r, yl_g, yl_b, 1);
+slider_v_thin(1, rate_x, rate_y, v_sl_w, wet_h, 0, 1, rate_mult_p.pr_get(), 0, 0, rate_mult_p.target);
+ui.r == 1 ? (
+  rate_mult_p.pr_set(ui.rv);
+);
+gfx_x = floor(ui.nl_x + v_sl_w/2 + 0.5); gfx_y = ui.nl_y + 4;
+sizzle_label("Rate", 16, 1);
+gfx_set(rr, rg, rb, 1);
+ll_y = ui.nl_y + 20 + 20;
+r_lb_str = 3; 
+r_lb = floor(map_rate(rate_mult_p.pr_get()) + 0.5);
+sprintf(r_lb_str ,"%{r_lb}dx");
+gfx_x = ui.label_x; gfx_y = ui.label_y; 
+sizzle_label(r_lb_str, 16, 3);
+
+//BUTTONS
+but_x = ui.sl_x; but_y = ui.sl_y; 
+gfx_col(1, 1, 1, 1);
+gfx_col(yl_r, yl_g, yl_b, 1);
+but_1_on = chorus_type_p.target == 1 || chorus_type_p.target == 3;
+but_2_on = chorus_type_p.target == 2 || chorus_type_p.target == 3;
+decor(but_x, but_y, but_size, but_size, but_1_on, 1);
+gfx_col(yl_r, yl_g, yl_b, 1);
+sizzle_checkbox_full(2, but_x, but_y, but_size, but_size, but_1_on, "", 25);
+ui.r == 1 ? (
+  chorus_type_p.target == 1 ? (
+    chorus_type_p.pr_set(0);
+  ) : chorus_type_p.target == 2 ? (
+    chorus_type_p.pr_set(3);
+  ) : chorus_type_p.target == 0 ? (
+    chorus_type_p.pr_set(1);
+  ) : chorus_type_p.target == 3 ? (
+    chorus_type_p.pr_set(2);  
+  );
+);
+but_2_x = ui.sl_x - but_margin_x; but_2_y = ui.sl_y;
+decor(but_2_x, but_2_y, but_size, but_size, but_2_on, 2);
+gfx_col(yl_r, yl_g, yl_b, 1);
+sizzle_checkbox_full(3, but_2_x, but_2_y, but_size, but_size, but_2_on, "", 25);
+ui.r == 1 ? (
+  chorus_type_p.target == 2 ? (
+    chorus_type_p.pr_set(0);
+  ) : chorus_type_p.target == 1 ? (
+    chorus_type_p.pr_set(3);
+  ) : chorus_type_p.target == 0 ? (
+    chorus_type_p.pr_set(2);
+  ) : chorus_type_p.target == 3 ? (
+    chorus_type_p.pr_set(1);
+  );
+);
+sl_size = ui.sl_x - ui.margin - but_x;
+
+//CUTOFF
+sizzle_palette(0.65, 1);
+filter_yo = 41;
+filter_x = but_x; filter_h = 41;
+filter_y = but_y + wet_h - filter_h - 10;
+slider_h_cutoff(7, filter_x, filter_y, filter_w, filter_h, 0, 1, cutoff_p.pr_get(), filter_spread*40, 0.91357);
+ui.r == 1 ? (
+  cutoff_p.pr_set(ui.rv);
+);
+sizzle_palette(0.65, 1);
+gfx_x = filter_x + filter_w/2; gfx_y = filter_y + floor(41/2 + 0.5);
+cutoff_val = floor(20*2^(filter_bandwidth*cutoff_p.pr_get()) + 0.5);
+cutoff_str = 1;
+sprintf(cutoff_str,"%{cutoff_val}dhz");
+sizzle_label(cutoff_str, 16, 3);
+slider_h_thin(8, ui.nl_x, ui.nl_y - 15, filter_w, 30, 0, 1, resonance_p.pr_get(), 0, resonance_p.target, 0);
+ui.r == 1 ? (
+  resonance_p.pr_set(ui.rv);
+);
+gfx_x = ui.nl_x; gfx_y = ui.nl_y - 11;
+sizzle_label("Resonance", 16, 0);
+gfx_x = filter_x; gfx_y = filter_y - 28;
+sizzle_label("Cutoff", 21, 0);
+
+spread_nx = 0.7;
+spread_x = floor(filter_x + filter_w*spread_nx + 0.5); spread_y = filter_y - 25;
+ui.draw_notch = 1;
+slider_h_thin(9, spread_x, spread_y, (1 - spread_nx)*filter_w, 30, -1, 1, filter_spread_p.pr_get(), 0, filter_spread_p.target, 1);
+ui.r == 1 ? (
+  filter_spread_p.pr_set(ui.rv);
+);
+ui.draw_notch = 0;
+gfx_x = ui.sl_x - ui.margin; gfx_y = spread_y - 14;
+sizzle_label("Spread", 16, 2);
+
+//WET
+gfx_col(yl_r, yl_g, yl_b, 1);
+wet_x = but_x + sl_size + ui.margin; wet_y = but_y;
+slider_v_thin(6, wet_x, wet_y, v_sl_w, wet_h, 0, 1, chorus_wet_p.pr_get(), 1, 0.5, chorus_wet_p.target);
+ui.r == 1 ? (
+  chorus_wet_p.pr_set(ui.rv);
+);
+gfx_x = floor(ui.nl_x + v_sl_w/2 + 0.5); gfx_y = ui.nl_y + 4;
+sizzle_label("Wet", 16, 1);
+
+//SLIDERS
+sizzle_palette(0.4, 1);
+but_sliders_x = ui.sl_x; but_sliders_y = but_y + 4;
+slider_h_thin(4, but_sliders_x, but_sliders_y, sl_size, sl_h, 0, 1, drive_p.pr_get(), 0, drive_p.target, 1);
+ui.r == 1 ? (
+  drive_p.pr_set(ui.rv);
+);
+gfx_x = but_sliders_x + sl_size; gfx_y = but_sliders_y - 8;
+sizzle_label("Drive", lb_sm_s, 2);
+w_hp_sl_x = ui.nl_x; w_hp_sl_y = ui.nl_y;
+slider_h_thin(5, w_hp_sl_x, w_hp_sl_y, sl_size, sl_h, 0, 1, hp_cutoff_p.pr_get(), 0, hp_cutoff_p.target, 1);
+ui.r == 1 ? (
+  hp_cutoff_p.pr_set(ui.rv);
+);
+gfx_x = ui.nl_x; gfx_y = ui.sl_y - 10;
+sizzle_label("Wet HP", lb_sm_s, 0);
+
+ma_xs = w_hp_sl_x; ma_ys = floor(w_hp_sl_y + sl_h/2 + 0.5);
+ma_t = 0; ma_i = 0;
+loop(5, 
+  ma_xp = lerp(ma_xs, ma_xs + sl_size, ma_t);
+  sizzle_line(ma_xp, ma_ys, 0, 4, 5);
+  gfx_x = ma_xp; gfx_y = ma_ys + 7;
+  center = ma_t > 0; center = ma_t == 1 ? 2 : center;
+  label = "";
+  
+  sp_lb_str = 5; 
+  sp_lb = map_wet_hp(ma_t);
+  sprintf(sp_lb_str ,"%{sp_lb}dhz");  
+
+  sizzle_label(sp_lb_str, 12, center);
+  ma_t += 1/4; ma_i += 1;
+);
+
+
+//MOD SLIDERS
+sizzle_palette(0.4 + t_inc, 1);
+gfx_col(rr, rg, rb, 1);
+mod_sliders_x = but_sliders_x; mod_sliders_y = but_y + wet_h - 2*sl_h + ui.margin + 2;
+slider_h_thin(10, mod_sliders_x, mod_sliders_y, filter_w, sl_h, 0, 1, lfo_depth_p.pr_get(), 0, lfo_depth_p.target, 1);
+ui.r == 1 ? (
+  lfo_depth_p.pr_set(ui.rv);
+);
+gfx_x = mod_sliders_x + filter_w; gfx_y = mod_sliders_y - 10;
+sizzle_label("Depth", lb_sm_s, 2);
+gfx_x = floor(mod_sliders_x + filter_w/2 + 0.5);  gfx_y = mod_sliders_y - 18;
+sizzle_label("FILTER MOD", 21, 3);
+sp_sl_x = ui.nl_x; sp_sl_y = ui.nl_y;
+slider_h_thin(11, sp_sl_x, sp_sl_y, filter_w, sl_h, 0, 1, lfo_speed_p.pr_get(), 0, lfo_speed_p.target, 1);
+ui.r == 1 ? (
+  lfo_speed_p.pr_set(ui.rv);
+);
+gfx_x = ui.nl_x; gfx_y = ui.sl_y - 10;
+sizzle_label("Speed", lb_sm_s, 0);
+
+ma_xs = sp_sl_x; ma_ys = floor(sp_sl_y + sl_h - sl_h/2 + 0.5);
+ma_t = 0; ma_i = 0;
+loop(5, 
+  ma_xp = lerp(ma_xs, ma_xs + filter_w, ma_t);
+  sizzle_line(ma_xp, ma_ys, 0, 4, 5);
+  gfx_x = ma_xp; gfx_y = ma_ys + 7;
+  center = ma_t > 0; center = ma_t == 1 ? 2 : center;
+  label = "";
+  
+  sp_lb_str = 4; 
+  sp_lb = map_rate(ma_t);
+  sprintf(sp_lb_str ,"%{sp_lb}dhz");  
+
+  sizzle_label(sp_lb_str, 12, center);
+  ma_t += 1/4; ma_i += 1;
+);
+
+
+//STEREO WIDTH
+gfx_col(yl_r, yl_g, yl_b, 1);
+slider_v_thin(12, but_sliders_x + but_size*2 + ui.margin*2 - but_margin_x, but_sliders_y - 4, v_sl_w, wet_h, -1, 1, width_p.pr_get(), 0, 0, width_p.target);
+ui.r == 1 ? (
+  width_p.pr_set(ui.rv);
+);
+gfx_x = floor(ui.nl_x + v_sl_w/2 + 0.5); gfx_y = ui.nl_y + 4;
+sizzle_label("Width", 16, 1);
+
+
+w_lb_str = 2; 
+w_lb = width_p.pr_get();
+w_lb = floor(map_range(w_lb, -1, 1, 0, 200) + 0.5);
+sprintf(w_lb_str ,"%{w_lb}d");
+gfx_x = ui.label_x; gfx_y = ui.label_y;
+sizzle_label(w_lb_str, 16, 3);
+

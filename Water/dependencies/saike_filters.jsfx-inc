@@ -1,0 +1,105 @@
+@init
+/*
+  Awesome ladder filter written by Sai'ke. 
+  https://forum.cockos.com/showthread.php?t=220277
+  https://github.com/JoepVanlier/JSFX/blob/master/Yutani/Yutani_Dependencies/Saike_Yutani_Filters.jsfx-inc
+*/
+function tanh(x)
+local()
+global()
+instance()
+(
+  (2/(1+exp(-2*x)) - 1)
+);
+
+function init_moog2(cutoff, resonance)
+local(fs, fc, g, p0s, nmp, gN, kgN, p0g, tmp, acc)
+global(srate, oversampling)
+instance(VT2, rg1, rg2, qg1, qg2, si1, sf1, sg1, si2, sf2, sg2, k0g, k0s, VT2i, q0s, r1s, k)
+(
+  k    = resonance*120;
+
+  fs   = srate * oversampling;
+  fc   = .5 * (srate < 44100 ? srate : 44100) * exp( (1-cutoff) * log(20/22050) );    
+  g    = tan($pi / fs * fc) / sqrt(1 + k);
+  
+  VT2  = 0.052;
+  VT2i = 19.23076923076923;
+
+  // Ladder stages
+  p0s = 1.0 / (1.0 + g);
+  q0s = 1.0 - g;
+  r1s = -g;
+  k0s = VT2 * g * p0s;
+
+  // Global filter
+  nmp = (1.0 - p0s);
+  gN  = nmp ^ 2;
+  kgN = k * gN;
+  p0g = 1.0 / (1.0 + kgN);
+  k0g = -VT2i * p0g;
+
+  rg1 = -2.0*kgN;
+  rg2 = -1.0*kgN;
+  acc = tmp = p0s*(g - 1.0);
+  qg1 = -2.0*(kgN + acc);
+  acc = acc*tmp;
+  qg2 = -1.0*(kgN + acc);
+);
+  
+function eval_moog2(x)
+local(yi, yd, yf)
+global(f1)
+instance(yo, y, A, B, rg1, rg2, qg1, qg2, si1, sf1, sg1, si2, sf2, sg2, k0g, k0s, VT2i, q0s, r1s, k)
+(
+  yo = tanh(k0g * (x + sg1));
+  A    = yo;
+
+  yi   = yo;
+  yd   = k0s * (yi + sf1);
+  y    = yd + si1;
+  yo   = tanh(VT2i * y);
+  B    = yo;
+
+  si1 = yd + y;
+  sf1 = r1s * yi - q0s * yo;
+
+  yi   = yo;
+  yd   = k0s * (yi + sf2);
+  y    = yd + si2;
+  yo   = tanh(VT2i * y);
+
+  si2 = yd + y;
+  sf2 = r1s * yi - q0s * yo;
+
+  yf = k * y;
+
+  sg1 = rg1 * x + qg1 * yf + sg2;
+  sg2 = rg2 * x + qg2 * yf;
+);  
+
+function mix_moog2(x, choice, frac)
+local()
+global()
+instance(VT, VT2, VT2i, A, B, y, yo, k, f1, f2)
+(
+  this.eval_moog2(x*VT2);
+  
+  (choice == 0) ? (
+    f1 = y * (1 + k); // LP
+    f2 = VT2 * (2*B - 2*yo)*8; // BP
+  ) : (choice == 1) ? (
+    f1 = VT2 * (2*B - 2*yo)*8; // BP
+    f2 = VT2 * (A - B); // HP
+  ) : (choice == 2) ? (
+    frac = frac * frac;
+    frac = frac * frac;
+    f1 = VT2 * (A - B); // HP
+    f2 = -VT2 * (2*B-2*yo-A); // BR
+  ) : (choice == 3) ? (
+    f1 = -VT2 * (2*B-2*yo-A); // BR
+    f2 = y * (1 + k); // LP
+  );
+  
+  (f2 * frac + f1 * (1.0-frac))*VT2i;
+);
