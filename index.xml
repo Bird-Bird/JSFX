@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="BirdBird JSFX" commit="783454f9fa718340fdbd8d2df63483e9290c7cbc">
+<index version="1" name="BirdBird JSFX" commit="793abe8d746a9cfe3fb97b03d1edd658ededdcce">
   <category name="Shifter">
     <reapack name="Shifter B1 (BirdBird).jsfx" type="effect" desc="Shifter B1 (BirdBird)">
       <metadata>
@@ -108,6 +108,16 @@
         <source file="dependencies/birdbird_various.jsfx-inc">https://github.com/Bird-Bird/JSFX/raw/783454f9fa718340fdbd8d2df63483e9290c7cbc/Water/dependencies/birdbird_various.jsfx-inc</source>
         <source file="dependencies/saike_filters.jsfx-inc">https://github.com/Bird-Bird/JSFX/raw/783454f9fa718340fdbd8d2df63483e9290c7cbc/Water/dependencies/saike_filters.jsfx-inc</source>
         <source file="dependencies/sault_elliptic_lp.jsfx-inc">https://github.com/Bird-Bird/JSFX/raw/783454f9fa718340fdbd8d2df63483e9290c7cbc/Water/dependencies/sault_elliptic_lp.jsfx-inc</source>
+      </version>
+      <version name="0.5.1" author="BirdBird" time="2022-08-29T20:08:02Z">
+        <changelog><![CDATA[Beta 1]]></changelog>
+        <source>https://github.com/Bird-Bird/JSFX/raw/793abe8d746a9cfe3fb97b03d1edd658ededdcce/Water/Water%20(BirdBird).jsfx</source>
+        <source file="dependencies/birdbird_buffer.jsfx-inc">https://github.com/Bird-Bird/JSFX/raw/793abe8d746a9cfe3fb97b03d1edd658ededdcce/Water/dependencies/birdbird_buffer.jsfx-inc</source>
+        <source file="dependencies/birdbird_parameters.jsfx-inc">https://github.com/Bird-Bird/JSFX/raw/793abe8d746a9cfe3fb97b03d1edd658ededdcce/Water/dependencies/birdbird_parameters.jsfx-inc</source>
+        <source file="dependencies/birdbird_sizzle_gui.jsfx-inc">https://github.com/Bird-Bird/JSFX/raw/793abe8d746a9cfe3fb97b03d1edd658ededdcce/Water/dependencies/birdbird_sizzle_gui.jsfx-inc</source>
+        <source file="dependencies/birdbird_various.jsfx-inc">https://github.com/Bird-Bird/JSFX/raw/793abe8d746a9cfe3fb97b03d1edd658ededdcce/Water/dependencies/birdbird_various.jsfx-inc</source>
+        <source file="dependencies/saike_filters.jsfx-inc">https://github.com/Bird-Bird/JSFX/raw/793abe8d746a9cfe3fb97b03d1edd658ededdcce/Water/dependencies/saike_filters.jsfx-inc</source>
+        <source file="dependencies/sault_elliptic_lp.jsfx-inc">https://github.com/Bird-Bird/JSFX/raw/793abe8d746a9cfe3fb97b03d1edd658ededdcce/Water/dependencies/sault_elliptic_lp.jsfx-inc</source>
       </version>
     </reapack>
   </category>
